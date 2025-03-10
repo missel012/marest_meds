@@ -4,11 +4,55 @@ include("./includes/topbar.php");
 include("./includes/sidebar.php");
 ?>
 
+<div class="pagetitle">
+  <h1>Prescription Orders</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+      <li class="breadcrumb-item">Prescription Orders</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
 
-<div class="col-lg-6">
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="form-floating">
+      <input type="date" class="form-control" id="dateRange" placeholder="Date Range">
+      <label for="dateRange">Select Date</label>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="form-floating">
+      <select class="form-select" id="medicineGroup" aria-label="Select Medicine Group">
+        <option selected>Select Group</option>
+        <option value="1">Group 1</option>
+        <option value="2">Group 2</option>
+        <option value="3">Group 3</option>
+      </select>
+      <label for="medicineGroup">Medicine Group</label>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="form-floating">
+      <select class="form-select" id="userName" aria-label="Select User Name">
+        <option selected>Select User Name</option>
+        <option value="1">User 1</option>
+        <option value="2">User 2</option>
+        <option value="3">User 3</option>
+      </select>
+      <label for="userName">User Name</label>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4"> <!-- Added margin-top class here -->
+
+  <div class="col-lg-6">
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">Sales Report</h5>
+        <h5 class="card-title">Sales Made</h5>
 
         <!-- Area Chart -->
         <div id="areaChart"></div>
@@ -401,6 +445,61 @@ include("./includes/sidebar.php");
       </div>
     </div>
   </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Orders</h5>
+        <p>Add <code>.table-borderless</code> for a table without borders.</p>
+
+        <!-- Order Table -->
+        <table class="table table-borderless">
+          <thead>
+            <tr>
+              <th scope="col">Order ID</th>
+              <th scope="col">Date and Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>ORD12345</td>
+              <td>2024-03-10 14:30</td>
+            </tr>
+            <tr>
+              <td>ORD12346</td>
+              <td>2024-03-10 15:00</td>
+            </tr>
+            <tr>
+              <td>ORD12347</td>
+              <td>2024-03-10 16:15</td>
+            </tr>
+            <tr>
+              <td>ORD12348</td>
+              <td>2024-03-10 17:45</td>
+            </tr>
+            <tr>
+              <td>ORD12349</td>
+              <td>2024-03-10 18:20</td>
+            </tr>
+          </tbody>
+        </table>
+        <!-- End Order Table -->
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const dateRangePicker = new Litepicker({
+      element: document.getElementById('dateRange'),
+      singleMode: false,
+      format: 'YYYY-MM-DD'
+    });
+  });
+</script>
 
 <?php
 include("./includes/footer.php");
