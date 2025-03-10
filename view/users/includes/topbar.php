@@ -2,9 +2,13 @@
   <header id="header" class="header fixed-top d-flex align-items-center">
 
     <div class="d-flex align-items-center justify-content-between">
-      <a href="index.html" class="logo d-flex align-items-center">
-        <img src="../../assets/img/logo.png" alt="">
-        <span class="d-none d-lg-block">NiceAdmin</span>
+      <a href="index.php" class="logo d-flex align-items-center">
+        <img src="../../assets/img/marest_logo.png" alt="Logo">
+
+        <span class="d-none d-lg-block">
+          <span style="color:  #db5c79 ; font-weight: bold;">Marest</span>
+          <span style="color:rgb(109, 204, 85); font-weight: bold;">Meds</span>
+        </span>
       </a>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div><!-- End Logo -->
@@ -169,14 +173,14 @@
         <li class="nav-item dropdown pe-3">
 
           <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="../../assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
-            <span class="d-none d-md-block dropdown-toggle ps-2">K. Anderson</span>
+            <img src="../../assets/img/user.jpg" alt="Profile" class="rounded-circle">
+            <span class="d-none d-md-block dropdown-toggle ps-2">M. Datahan</span>
           </a><!-- End Profile Iamge Icon -->
 
           <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-              <h6>Esther Beuthel</h6>
-              <span>Cashier</span>
+              <h6>Marisol Datahan</h6>
+              <span>Staff</span>
             </li>
             <li>
               <hr class="dropdown-divider">
