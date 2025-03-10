@@ -684,9 +684,9 @@ h6 {
   align-items: center;
   font-size: 15px;
   font-weight: 600;
-  color: #4154f1;
+  color: #6CCF54;
   transition: 0.3;
-  background: #f6f9ff;
+  background: #EDFFE9;
   padding: 10px 15px;
   border-radius: 4px;
 }
@@ -694,11 +694,11 @@ h6 {
 .sidebar-nav .nav-link i {
   font-size: 16px;
   margin-right: 10px;
-  color: #4154f1;
+  color: #6CCF54;
 }
 
 .sidebar-nav .nav-link.collapsed {
-  color: #012970;
+  color: black;
   background: #fff;
 }
 
@@ -707,12 +707,12 @@ h6 {
 }
 
 .sidebar-nav .nav-link:hover {
-  color: #4154f1;
-  background: #f6f9ff;
+  color: #6CCF54;
+  background: #EDFFE9;
 }
 
 .sidebar-nav .nav-link:hover i {
-  color: #4154f1;
+  color: #6CCF54;
 }
 
 .sidebar-nav .nav-link .bi-chevron-down {
@@ -756,7 +756,6 @@ h6 {
 .sidebar-nav .nav-content a.active i {
   background-color: #4154f1;
 }
-
 /*--------------------------------------------------------------
 # Dashboard
 --------------------------------------------------------------*/
@@ -1231,3 +1230,4 @@ h6 {
   font-size: 13px;
   color: #012970;
 }
+
