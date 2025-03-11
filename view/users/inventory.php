@@ -2,6 +2,16 @@
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
+include("../../dB/config.php"); // Ensure this file contains your database connection
+
+// Fetch inventory items grouped by category
+$query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
+$result = mysqli_query($conn, $query);
+
+$inventory = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $inventory[$row['group']][] = $row;
+}
 ?>
 
 <div class="pagetitle">
@@ -15,243 +25,55 @@ include("./includes/sidebar.php");
 </div><!-- End Page Title -->
 
 <section class="section">
+    <?php foreach ($inventory as $category => $items) : ?>
+        <div class="card">
+            <div class="card-body py-1">
+                <h1 class="mt-4"><span class="badge badge-custom"><?= htmlspecialchars($category) ?></span></h1>
 
-    <div class="card">
-        <div class="card-body py-1">
-            <h1 class="mt-4"><span class="badge badge-custom">Generic Medicines</span></h1>
-
-            <div id="genericMedicinesCarousel" class="carousel slide mt-4">
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
+                <div id="carousel-<?= strtolower(str_replace(' ', '-', $category)) ?>" class="carousel slide mt-4">
+                    <div class="carousel-inner">
+                        <?php
+                        $chunks = array_chunk($items, 4); // Display 4 items per carousel slide
+                        foreach ($chunks as $index => $chunk) :
+                        ?>
+                            <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
+                                <div class="row">
+                                    <?php foreach ($chunk as $item) : ?>
+                                        <div class="col-lg-3">
+                                            <div class="card mt-4">
+                                                <div class="image-container">
+                                                    <img src="<?= str_replace('C:/xampp/htdocs/datahan_eblacas/', '../../', $item['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($item['brandName']) ?>">
+                                                </div>
+                                                <div class="card-body text-center">
+                                                    <h5 class="card-title"><?= htmlspecialchars($item['genericName']) . ' ' . htmlspecialchars($item['brandName']) . ' ' . $item['milligram'] . 'ml ' . $item['dosageForm'] ?></h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: <?= $item['quantity'] ?></h6>
+                                                    <p class="card-text">₱<?= number_format($item['price'], 2) ?></p>
+                                                </div>
+                                                <button type="button" class="btn btn-custom">Check Details</button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
-                    <div class="carousel-item">
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                        </div>
-                    </div>
+                    <?php if (count($items) > 4) : ?>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<?= strtolower(str_replace(' ', '-', $category)) ?>" data-bs-slide="prev" style="display: none;">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-<?= strtolower(str_replace(' ', '-', $category)) ?>" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    <?php endif; ?>
                 </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#genericMedicinesCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#genericMedicinesCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
             </div>
         </div>
-    </div>
-
-    <br> <!-- Add a line break here -->
-
-    <div class="card">
-        <div class="card-body py-1">
-            <h1 class="mt-4"><span class="badge badge-custom">Immunity Boosters</span></h1>
-
-            <div id="immunityBoostersCarousel" class="carousel slide mt-4">
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <div class="row">
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                            <div class="col-lg-3">
-                                <div class="card mt-4">
-                                    <img src="../../assets/img/card.jpg" class="card-img-top" alt="...">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title">Loperamide 2 mg Capsule – Rose Pharmacy Generics – 10’S</h5>
-                                        <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: 100</h6>
-                                        <p class="card-text">₱60.00</p>
-                                    </div>
-                                    <button type="button" class="btn btn-custom">Check Details</button>
-                                </div><!-- End Card with an image on top -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#immunityBoostersCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#immunityBoostersCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <?php endforeach; ?>
 </section>
 
-<?php
-include("./includes/footer.php");
-?>
+<?php include("./includes/footer.php"); ?>
 
 <style>
     /* Inventory */
@@ -259,30 +81,16 @@ include("./includes/footer.php");
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
         background-color: rgba(0, 0, 0, 0.5);
-        /* Default background color */
         border-radius: 50%;
         padding: 10px;
-        /* Default padding */
         width: 30px;
-        /* Default width */
         height: 30px;
-        /* Default height */
         transition: all 0.3s ease;
-        /* Smooth transition for hover and focus effects */
-    }
-
-    .carousel-control-prev-icon::before,
-    .carousel-control-next-icon::before {
-        font-size: 20px;
-        /* Default icon size */
     }
 
     .carousel-control-prev,
     .carousel-control-next {
         width: 5%;
-        /* Adjust the width as needed */
-        transform: translateX(-50%);
-        /* Move the arrows to the sides */
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
@@ -290,25 +98,18 @@ include("./includes/footer.php");
 
     .carousel-control-prev {
         left: -4%;
-        /* Position the left arrow further outside */
     }
 
     .carousel-control-next {
         right: -4%;
-        /* Position the right arrow further outside */
     }
 
-    /* Hover and Focus Effects */
     .carousel-control-prev-icon:hover,
     .carousel-control-next-icon:hover {
         background-color: rgba(0, 0, 0, 0.8);
-        /* Darker background color */
         padding: 15px;
-        /* Larger padding */
         width: 40px;
-        /* Larger width */
         height: 40px;
-        /* Larger height */
     }
 
     /* Badge */
@@ -320,17 +121,56 @@ include("./includes/footer.php");
     .btn-custom {
         background-color: #db5c79;
         border-color: #db5c79;
-        ;
-        /* Ensure the border color matches the background */
         color: #fff;
-        /* Set the text color to white */
     }
 
     .btn-custom:hover {
-        background-color: #db5c79;
-        ;
-        /* Slightly darker shade for hover effect */
-        border-color: #db5c79;
-        ;
+        background-color: #c04a67;
+        border-color: #c04a67;
+    }
+
+    /* Image Container */
+    .image-container {
+        width: 100%;
+        height: 200px; /* Set a fixed height for the image container */
+        overflow: hidden;
+    }
+
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Ensures the image covers the container while maintaining aspect ratio */
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const carousels = document.querySelectorAll('.carousel');
+
+        carousels.forEach(carousel => {
+            const prevButton = carousel.querySelector('.carousel-control-prev');
+            const nextButton = carousel.querySelector('.carousel-control-next');
+            const items = carousel.querySelectorAll('.carousel-item');
+
+            if (items.length <= 1) {
+                nextButton.style.display = 'none';
+            }
+
+            carousel.addEventListener('slide.bs.carousel', function (event) {
+                const activeIndex = Array.from(items).indexOf(carousel.querySelector('.carousel-item.active'));
+                const nextIndex = event.to;
+
+                if (nextIndex === 0) {
+                    prevButton.style.display = 'none';
+                    nextButton.style.display = 'block';
+                } else if (nextIndex === items.length - 1) {
+                    nextButton.style.display = 'none';
+                    prevButton.style.display = 'block';
+                } else {
+                    prevButton.style.display = 'block';
+                    nextButton.style.display = 'block';
+                }
+            });
+        });
+    });
+</script>
