@@ -4,15 +4,64 @@ include("./includes/topbar.php");
 include("./includes/sidebar.php");
 ?>
 
+<div class="pagetitle">
+  <h1>Dashboard</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+      <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
 
-<div class="col-lg-6">
+<div class="row">
+  <!-- Info Cards -->
+  <div class="col-lg-4 col-md-6">
+    <div class="card info-card revenue-card">
+      <div class="card-body text-center">
+        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+        <h6 class="mt-3">Revenue</h6>
+        <h2>Rs. 8,55,875</h2>
+        <a href="#" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Detailed Report <i class="bi bi-chevron-right"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6">
+    <div class="card info-card inventory-card">
+      <div class="card-body text-center">
+        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
+          <i class="bi bi-capsule"></i>
+        </div>
+        <h6 class="mt-3">Medicines Available</h6>
+        <h2>298</h2>
+        <a href="inventory.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">Visit Inventory <i class="bi bi-chevron-right"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 col-md-6">
+    <div class="card info-card staff-card">
+      <div class="card-body text-center">
+        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
+          <i class="bi bi-people"></i>
+        </div>
+        <h6 class="mt-3">Staffs on Shift</h6>
+        <h2>3</h2>
+        <a href="#" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Staffs <i class="bi bi-chevron-right"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">Sales Report</h5>
-
-        <!-- Area Chart -->
+        <h5 class="card-title">Sales Performance</h5>
         <div id="areaChart"></div>
-
         <script>
           document.addEventListener("DOMContentLoaded", () => {
             const series = {
@@ -396,12 +445,119 @@ include("./includes/sidebar.php");
             }).render();
           });
         </script>
-        <!-- End Area Chart -->
-
       </div>
     </div>
   </div>
 
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Calendar</h5>
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const calendarElement = document.getElementById('calendar');
+    const currentDate = new Date();
+    const currentDay = currentDate.getDate();
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let calendarHTML = '<table class="table table-bordered"><thead><tr>';
+
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    daysOfWeek.forEach(day => {
+      calendarHTML += `<th>${day}</th>`;
+    });
+
+    calendarHTML += '</tr></thead><tbody><tr>';
+
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      calendarHTML += '<td></td>';
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      if ((day + firstDayOfMonth - 1) % 7 === 0) {
+        calendarHTML += '</tr><tr>';
+      }
+      if (day === currentDay) {
+        calendarHTML += `<td class="bg-primary text-white">${day}</td>`;
+      } else {
+        calendarHTML += `<td>${day}</td>`;
+      }
+    }
+
+    const lastDayOfMonth = new Date(currentYear, currentMonth, daysInMonth).getDay();
+    for (let i = lastDayOfMonth + 1; i < 7; i++) {
+      calendarHTML += '<td></td>';
+    }
+
+    calendarHTML += '</tr></tbody></table>';
+    calendarElement.innerHTML = calendarHTML;
+  });
+</script>
+
 <?php
 include("./includes/footer.php");
 ?>
+
+<style>
+
+  
+/* Dashboard Info Cards */
+.info-card {
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
+  margin-bottom: 20px;
+}
+
+.info-card .card-icon {
+  font-size: 32px;
+  line-height: 0;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  flex-grow: 0;
+  background: #f6f6fe;
+  color:rgb(233, 75, 75);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-card h5 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #012970;
+}
+
+.info-card h6 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #012970;
+}
+
+.info-card .btn {
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #52e42e;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+}
+
+.info-card .btn:hover {
+  background: #5bbf4a;
+}
+
+  </style>
