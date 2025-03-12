@@ -2,6 +2,16 @@
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
+include("../../dB/config.php");
+
+// Fetch inventory items grouped by category
+$query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
+$result = mysqli_query($conn, $query);
+
+$inventory = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $inventory[$row['group']][] = $row;
+}
 ?>
 
 <div class="pagetitle">
@@ -21,69 +31,49 @@ include("./includes/sidebar.php");
             <div class="card" style="flex: 3; margin-right: 10px;">
                 <div class="card-body" style="padding: 1rem;">
                     <!-- Pills Tabs -->
-                    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">All Items</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pills-profile-tab" data-bs-toggle="pill" data-bs-target="#pills-profile" type="button" role="tab" aria-controls="pills-profile" aria-selected="false">Generic Medicines</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pills-contact-tab" data-bs-toggle="pill" data-bs-target="#pills-contact" type="button" role="tab" aria-controls="pills-contact" aria-selected="false">Immunity Boosters</button>
-                        </li>
-                    </ul>
+                    <div class="nav nav-pills mb-3" id="pills-tab" role="tablist" style="overflow-x: auto; white-space: nowrap;">
+                        <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">All Items</button>
+                        <?php foreach ($inventory as $category => $items) : ?>
+                            <button class="nav-link" id="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>-tab" data-bs-toggle="pill" data-bs-target="#pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" type="button" role="tab" aria-controls="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" aria-selected="false"><?php echo htmlspecialchars($category); ?></button>
+                        <?php endforeach; ?>
+                    </div>
                     <div class="tab-content pt-2" id="myTabContent">
                         <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
                             <div class="row">
                                 <!-- All Items Tab -->
-                                <?php for ($i = 0; $i < 16; $i++): ?>
-                                <div class="col-lg-3">
-                                    <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?php echo $i < 8 ? 'Loperamide' : 'Ascorbic'; ?>', 60, '<?php echo $i < 8 ? 'loperamide.jpg' : 'ascorbic.jpg'; ?>')">
-                                        <img src="../../assets/img/<?php echo $i < 8 ? 'loperamide.jpg' : 'ascorbic.jpg'; ?>" class="card-img-top custom-card-img" alt="...">
-                                        <div class="card-body text-center" style="font-size: 0.875rem;">
-                                            <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $i < 8 ? 'Loperamide 2 mg Capsule - 10’S' : 'Ascorbic Acid 500 mg Tablet - 10’S'; ?></h5>
-                                            <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $i; ?>">100</span></h6>
-                                            <p class="card-text" style="font-size: 0.75rem;">₱60.00</p>
+                                <?php foreach ($inventory as $category => $items) : ?>
+                                    <?php foreach ($items as $item) : ?>
+                                        <div class="col-lg-3">
+                                            <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '', <?php echo $item['inventoryId']; ?>)">
+                                                <div class="card-body text-center" style="font-size: 0.875rem;">
+                                                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?></h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $item['inventoryId']; ?>"><?php echo $item['quantity']; ?></span></h6>
+                                                    <p class="card-text" style="font-size: 0.75rem;">₱<?php echo number_format($item['price'], 2); ?></p>
+                                                </div>
+                                            </button><!-- End Card with an image on top -->
                                         </div>
-                                    </button><!-- End Card with an image on top -->
-                                </div>
-                                <?php endfor; ?>
+                                    <?php endforeach; ?>
+                                <?php endforeach; ?>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="pills-profile" role="tabpanel" aria-labelledby="pills-profile-tab">
-                            <div class="row">
-                                <!-- Generic Medicines Tab -->
-                                <?php for ($i = 0; $i < 8; $i++): ?>
-                                <div class="col-lg-3">
-                                    <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('Loperamide', 60, 'loperamide.jpg')">
-                                        <img src="../../assets/img/loperamide.jpg" class="card-img-top custom-card-img" alt="...">
-                                        <div class="card-body text-center" style="font-size: 0.875rem;">
-                                            <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">Loperamide 2 mg Capsule - 10’S</h5>
-                                            <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-generic-<?php echo $i; ?>">100</span></h6>
-                                            <p class="card-text" style="font-size: 0.75rem;">₱60.00</p>
+                        <?php foreach ($inventory as $category => $items) : ?>
+                            <div class="tab-pane fade" id="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" role="tabpanel" aria-labelledby="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>-tab">
+                                <div class="row">
+                                    <!-- Category Tab -->
+                                    <?php foreach ($items as $item) : ?>
+                                        <div class="col-lg-3">
+                                            <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '', <?php echo $item['inventoryId']; ?>)">
+                                                <div class="card-body text-center" style="font-size: 0.875rem;">
+                                                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?></h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $item['inventoryId']; ?>"><?php echo $item['quantity']; ?></span></h6>
+                                                    <p class="card-text" style="font-size: 0.75rem;">₱<?php echo number_format($item['price'], 2); ?></p>
+                                                </div>
+                                            </button><!-- End Card with an image on top -->
                                         </div>
-                                    </button><!-- End Card with an image on top -->
+                                    <?php endforeach; ?>
                                 </div>
-                                <?php endfor; ?>
                             </div>
-                        </div>
-                        <div class="tab-pane fade" id="pills-contact" role="tabpanel" aria-labelledby="pills-contact-tab">
-                            <div class="row">
-                                <!-- Immunity Boosters Tab -->
-                                <?php for ($i = 0; $i < 8; $i++): ?>
-                                <div class="col-lg-3">
-                                    <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('Ascorbic', 60, 'ascorbic.jpg')">
-                                        <img src="../../assets/img/ascorbic.jpg" class="card-img-top custom-card-img" alt="...">
-                                        <div class="card-body text-center" style="font-size: 0.875rem;">
-                                            <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">Ascorbic Acid 500 mg Tablet - 10’S</h5>
-                                            <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-immunity-<?php echo $i; ?>">100</span></h6>
-                                            <p class="card-text" style="font-size: 0.75rem;">₱60.00</p>
-                                        </div>
-                                    </button><!-- End Card with an image on top -->
-                                </div>
-                                <?php endfor; ?>
-                            </div>
-                        </div>
+                        <?php endforeach; ?>
                     </div><!-- End Pills Tabs -->
                 </div>
             </div><!-- End Left Card -->
@@ -122,6 +112,11 @@ include("./includes/footer.php");
         transition: all 0.3s ease;
         text-align: left;
         padding: 0;
+        width: 100%;
+        height: 130px; /* Set a fixed height */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .custom-card:hover {
@@ -173,12 +168,6 @@ include("./includes/footer.php");
         align-items: center;
         justify-content: space-between;
         margin-bottom: 10px;
-    }
-
-    .cart-item img {
-        width: 100px; /* Same size as left card */
-        height: auto; /* Maintain aspect ratio */
-        margin-right: 10px;
     }
 
     .cart-item .item-details {
@@ -246,17 +235,44 @@ include("./includes/footer.php");
         border-color: #5bbd4a;
         color: white; /* Ensure text color remains white */
     }
+
+    /* Scrollable tabs */
+    #pills-tab {
+        overflow-x: auto; 
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #pills-tab::-webkit-scrollbar {
+        display: none; /* Hide scrollbar */
+    }
+
+    .nav-pills .nav-link {
+        display: inline-block;
+        white-space: nowrap; /* Ensure tabs are in one row */
+    }
+
+    .nav-pills {
+        flex-wrap: nowrap; /* Prevent tabs from wrapping to the next line */
+    }
 </style>
 
 <script>
     let cart = {};
 
-    function addToCart(itemName, itemPrice, itemImage) {
+    function addToCart(genericName, brandName, itemPrice, itemImage, inventoryId) {
+        const itemName = `${genericName} ${brandName}`;
+        const stockElement = document.getElementById(`stock-${inventoryId}`);
+        const originalQuantity = parseInt(stockElement.innerText);
+        
         if (!cart[itemName]) {
-            cart[itemName] = { quantity: 0, price: itemPrice, image: itemImage };
+            cart[itemName] = { quantity: 0, price: itemPrice, image: itemImage, inventoryId: inventoryId, originalQuantity: originalQuantity };
         }
-        cart[itemName].quantity++;
-        updateCart();
+        if (cart[itemName].quantity < originalQuantity) {
+            cart[itemName].quantity++;
+            updateStock(inventoryId, -1);
+            updateCart();
+        }
     }
 
     function updateCart() {
@@ -272,15 +288,14 @@ include("./includes/footer.php");
             total += totalPrice;
             cartItems.innerHTML += `
                 <div class="cart-item">
-                    <img src="../../assets/img/${item.image}" alt="${itemName}">
                     <div class="item-details">
                         <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">${itemName}</h5>
                         <p class="card-text" style="font-size: 0.75rem;">₱${totalPrice.toFixed(2)}</p>
                     </div>
                     <div class="item-quantity">
-                        <button onclick="changeQuantity('${itemName}', -1)">-</button>
+                        <button onclick="changeQuantity('${itemName}', -1)" ${item.quantity === 0 ? 'disabled' : ''}>-</button>
                         <span>${item.quantity}</span>
-                        <button onclick="changeQuantity('${itemName}', 1)">+</button>
+                        <button onclick="changeQuantity('${itemName}', 1)" ${item.quantity === item.originalQuantity ? 'disabled' : ''}>+</button>
                         <div class="icon" onclick="removeFromCart('${itemName}')">
                             <i class="bi bi-trash"></i>
                         </div>
@@ -295,18 +310,43 @@ include("./includes/footer.php");
 
     function changeQuantity(itemName, change) {
         if (cart[itemName]) {
-            cart[itemName].quantity += change;
-            if (cart[itemName].quantity <= 0) {
-                delete cart[itemName];
+            const newQuantity = cart[itemName].quantity + change;
+            if (newQuantity >= 0 && newQuantity <= cart[itemName].originalQuantity) {
+                cart[itemName].quantity = newQuantity;
+                updateStock(cart[itemName].inventoryId, -change); // Reverse the change for stock
+                if (cart[itemName].quantity === 0) {
+                    delete cart[itemName];
+                }
+                updateCart();
             }
-            updateCart();
         }
     }
 
     function removeFromCart(itemName) {
         if (cart[itemName]) {
+            updateStock(cart[itemName].inventoryId, cart[itemName].quantity);
             delete cart[itemName];
             updateCart();
         }
     }
+
+    function updateStock(inventoryId, change) {
+        const stockElement = document.getElementById(`stock-${inventoryId}`);
+        const currentStock = parseInt(stockElement.innerText);
+        stockElement.innerText = currentStock + change;
+    }
+
+    document.getElementById('pay-now-btn').addEventListener('click', function() {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'processOrder.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                alert('Order placed successfully!');
+                cart = {};
+                updateCart();
+            }
+        };
+        xhr.send(JSON.stringify(cart));
+    });
 </script>
