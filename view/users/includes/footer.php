@@ -32,6 +32,11 @@
 <style>
   .back-to-top {
     background-color: #6CCF54;
+    transition: background-color 0.3s ease;
+  }
+
+  .back-to-top:hover {
+    background-color: #5bbd4a;
   }
 </style>
 

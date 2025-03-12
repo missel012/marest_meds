@@ -206,8 +206,8 @@ include("./includes/footer.php");
     }
 
     .cart-item .item-quantity button:hover {
-        background-color: #EDFFE9;
-        color: #6CCF54;
+        background-color: #5bbd4a;
+        color: white; /* Ensure text color remains white */
     }
 
     .cart-item .item-quantity span {
@@ -242,9 +242,9 @@ include("./includes/footer.php");
     }
 
     #pay-now-btn:hover {
-        background-color: #EDFFE9;
-        border-color: #EDFFE9;
-        color: #6CCF54;
+        background-color: #5bbd4a;
+        border-color: #5bbd4a;
+        color: white; /* Ensure text color remains white */
     }
 </style>
 
