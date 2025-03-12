@@ -5,7 +5,7 @@ include("./includes/sidebar.php");
 ?>
 
 
-USER LOGIN
+PROFILE
 
 
 <?php
