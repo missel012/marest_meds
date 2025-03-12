@@ -1,7 +1,41 @@
 <?php
 include("./includes/header.php");
-include("./includes/topbar.php");
+include("./includes/topbar.php"); // Remove messages icon in topbar
 include("./includes/sidebar.php");
+include("../../db/config.php"); // Include database configuration
+
+// Fetch total number of medicines
+$medicine_query = "SELECT COUNT(*) AS total_medicines FROM inventory";
+$medicine_result = mysqli_query($conn, $medicine_query);
+$medicine_data = mysqli_fetch_assoc($medicine_result);
+$total_medicines = $medicine_data['total_medicines'];
+
+// Fetch number of medicines with quantity less than 30
+$low_stock_query = "SELECT inventoryId, genericName, brandName, milligram, dosageForm, quantity, price FROM inventory WHERE quantity < 30";
+$low_stock_result = mysqli_query($conn, $low_stock_query);
+$low_stock_medicines = [];
+while ($row = mysqli_fetch_assoc($low_stock_result)) {
+    $low_stock_medicines[] = $row;
+}
+
+// Determine current shift
+date_default_timezone_set('Asia/Manila'); // Set the timezone
+$current_hour = date('H');
+if ($current_hour >= 8 && $current_hour < 12) {
+    $current_shift = 'Day';
+} elseif ($current_hour >= 12 && $current_hour < 17) {
+    $current_shift = 'Afternoon';
+} elseif ($current_hour >= 17 && $current_hour < 21) {
+    $current_shift = 'Night';
+} else {
+    $current_shift = 'None';
+}
+
+// Fetch number of staff on current shift
+$staff_query = "SELECT COUNT(*) AS staff_on_shift FROM staff WHERE shifts = '$current_shift'";
+$staff_result = mysqli_query($conn, $staff_query);
+$staff_data = mysqli_fetch_assoc($staff_result);
+$staff_on_shift = $staff_data['staff_on_shift'];
 ?>
 
 <div class="pagetitle">
@@ -17,14 +51,14 @@ include("./includes/sidebar.php");
 <div class="row">
   <!-- Info Cards -->
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card revenue-card">
+    <div class="card info-card low-stock-card" style="border: 3px solid #52e42e;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-currency-dollar"></i>
+          <i class="bi bi-exclamation-triangle"></i>
         </div>
-        <h6 class="mt-3">Revenue</h6>
-        <h2>Rs. 8,55,875</h2>
-        <a href="#" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Detailed Report <i class="bi bi-chevron-right"></i></a>
+        <h6 class="mt-3">Low on Stock</h6>
+        <h2><?php echo count($low_stock_medicines); ?></h2>
+        <button type="button" class="btn btn-custom mt-3" data-bs-toggle="modal" data-bs-target="#lowStockModal">View Details <i class="bi bi-chevron-right"></i></button>
       </div>
     </div>
   </div>
@@ -36,7 +70,7 @@ include("./includes/sidebar.php");
           <i class="bi bi-capsule"></i>
         </div>
         <h6 class="mt-3">Medicines Available</h6>
-        <h2>298</h2>
+        <h2><?php echo $total_medicines; ?></h2>
         <a href="inventory.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">Visit Inventory <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
@@ -49,8 +83,49 @@ include("./includes/sidebar.php");
           <i class="bi bi-people"></i>
         </div>
         <h6 class="mt-3">Staffs on Shift</h6>
-        <h2>3</h2>
-        <a href="#" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Staffs <i class="bi bi-chevron-right"></i></a>
+        <h2><?php echo $staff_on_shift; ?></h2>
+        <a href="staff.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Staffs <i class="bi bi-chevron-right"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Low Stock Modal -->
+<div class="modal fade" id="lowStockModal" tabindex="-1" aria-labelledby="lowStockModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="lowStockModalLabel">Low on Stock Items</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>Generic Name</th>
+              <th>Brand Name</th>
+              <th>Milligram</th>
+              <th>Dosage Form</th>
+              <th>Quantity</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($low_stock_medicines as $medicine): ?>
+              <tr>
+                <td><?php echo $medicine['genericName']; ?></td>
+                <td><?php echo $medicine['brandName']; ?></td>
+                <td><?php echo $medicine['milligram']; ?></td>
+                <td><?php echo $medicine['dosageForm']; ?></td>
+                <td><?php echo $medicine['quantity']; ?></td>
+                <td><?php echo $medicine['price']; ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -58,7 +133,7 @@ include("./includes/sidebar.php");
 
 <div class="row">
   <div class="col-lg-6">
-    <div class="card">
+    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
       <div class="card-body">
         <h5 class="card-title">Sales Performance</h5>
         <div id="areaChart"></div>
@@ -426,7 +501,11 @@ include("./includes/sidebar.php");
                 enabled: false
               },
               stroke: {
-                curve: 'straight'
+                curve: 'straight',
+                colors: ['#DB5C79']
+              },
+              fill: {
+                colors: ['#DB5C79', '#FFDEE6']
               },
               subtitle: {
                 text: 'Price Movements',
@@ -450,7 +529,7 @@ include("./includes/sidebar.php");
   </div>
 
   <div class="col-lg-6">
-    <div class="card">
+    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
       <div class="card-body">
         <h5 class="card-title">Calendar</h5>
         <div id="calendar"></div>
@@ -487,7 +566,7 @@ include("./includes/sidebar.php");
         calendarHTML += '</tr><tr>';
       }
       if (day === currentDay) {
-        calendarHTML += `<td class="bg-primary text-white">${day}</td>`;
+        calendarHTML += `<td style="background-color: #DB5C79; color: white;">${day}</td>`;
       } else {
         calendarHTML += `<td>${day}</td>`;
       }
@@ -508,12 +587,11 @@ include("./includes/footer.php");
 ?>
 
 <style>
-
-  
 /* Dashboard Info Cards */
 .info-card {
   padding: 20px;
-  border-radius: 5px;
+  border-radius: 15px; /* Changed to make corners rounded */
+  border: 3px solid #52e42e; /* Border color same as buttons */
   box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
   margin-bottom: 20px;
 }
