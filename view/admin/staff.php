@@ -57,6 +57,19 @@ if (isset($_GET['delete_id'])) {
   exit();
 }
 
+// Determine current shift
+date_default_timezone_set('Asia/Manila'); // Set the timezone
+$current_hour = date('H');
+if ($current_hour >= 8 && $current_hour < 12) {
+    $current_shift = 'Day';
+} elseif ($current_hour >= 12 && $current_hour < 17) {
+    $current_shift = 'Afternoon';
+} elseif ($current_hour >= 17 && $current_hour < 21) {
+    $current_shift = 'Night';
+} else {
+    $current_shift = 'None';
+}
+
 // Fetch staff data from the database
 $query = "SELECT staff_name, staff_id, email, shifts FROM staff";
 $result = mysqli_query($conn, $query);
@@ -86,7 +99,7 @@ $result = mysqli_query($conn, $query);
               <input type="text" class="form-control" placeholder="Search for Staff" id="searchStaff" onkeyup="searchStaffFunction()">
             </div>
             <div>
-              <button class="btn btn-primary" style="background: #007bff; border: none; color: white;" data-bs-toggle="modal" data-bs-target="#addStaffModal">+ Add Staff</button>
+              <button class="btn btn-primary" style="background: #DB5C79; border: none; color: white;" data-bs-toggle="modal" data-bs-target="#addStaffModal">+ Add Staff</button>
             </div>
           </div>
 
@@ -98,6 +111,7 @@ $result = mysqli_query($conn, $query);
                 <th>Staff ID</th>
                 <th>Email</th>
                 <th>Shifts</th>
+                <th>On-Shift</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -105,19 +119,21 @@ $result = mysqli_query($conn, $query);
               <?php
               if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
+                  $status_icon = ($row['shifts'] == $current_shift) ? '<i class="bi bi-check-circle" style="color: green;"></i>' : '<i class="bi bi-x-circle" style="color: red;"></i>';
                   echo "<tr>";
                   echo "<td>" . $row['staff_name'] . "</td>";
                   echo "<td>" . $row['staff_id'] . "</td>";
                   echo "<td>" . $row['email'] . "</td>";
                   echo "<td>" . $row['shifts'] . "</td>";
+                  echo "<td>" . $status_icon . "</td>";
                   echo '<td>
-                          <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-link" style="color: #007bff;"><i class="bi bi-pencil-square"></i></a>
-                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-link" style="color: #dc3545;" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
+                          <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
+                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
                         </td>';
                   echo "</tr>";
                 }
               } else {
-                echo "<tr><td colspan='5'>No staff found</td></tr>";
+                echo "<tr><td colspan='6'>No staff found</td></tr>";
               }
               ?>
             </tbody>
@@ -204,6 +220,17 @@ function searchStaffFunction() {
     }
   }
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+  const currentShift = "<?php echo $current_shift; ?>";
+  const rows = document.querySelectorAll(".table tbody tr");
+  rows.forEach(row => {
+    const shiftCell = row.cells[3];
+    if (shiftCell && shiftCell.textContent.trim() === currentShift) {
+      row.classList.add("highlight");
+    }
+  });
+});
 </script>
 
 <?php
@@ -222,6 +249,9 @@ if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
 ?>
 
 <style>
+  .highlight {
+    background-color: #FFD700 !important;
+  }
   .table-striped tbody tr:nth-of-type(odd) {
     background-color: #6CCF54 !important;
   }
