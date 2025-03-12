@@ -262,8 +262,8 @@ include("./includes/footer.php");
 
     function addToCart(genericName, brandName, itemPrice, itemImage, inventoryId) {
         const itemName = `${genericName} ${brandName}`;
-        const stockElement = document.getElementById(`stock-${inventoryId}`);
-        const originalQuantity = parseInt(stockElement.innerText);
+        const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
+        const originalQuantity = parseInt(stockElements[0].innerText);
         
         if (!cart[itemName]) {
             cart[itemName] = { quantity: 0, price: itemPrice, image: itemImage, inventoryId: inventoryId, originalQuantity: originalQuantity };
@@ -331,9 +331,11 @@ include("./includes/footer.php");
     }
 
     function updateStock(inventoryId, change) {
-        const stockElement = document.getElementById(`stock-${inventoryId}`);
-        const currentStock = parseInt(stockElement.innerText);
-        stockElement.innerText = currentStock + change;
+        const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
+        stockElements.forEach(stockElement => {
+            const currentStock = parseInt(stockElement.innerText);
+            stockElement.innerText = currentStock + change;
+        });
     }
 
     document.getElementById('pay-now-btn').addEventListener('click', function() {
