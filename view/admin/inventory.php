@@ -13,14 +13,15 @@ $result = mysqli_query($conn, $query);
 
 $inventory = [];
 while ($row = mysqli_fetch_assoc($result)) {
-    $inventory[$row['group']][] = $row;
+    $group = ucfirst($row['group']);
+    $inventory[$group][] = $row;
 }
 ?>
 
 <div class="pagetitle">
     <div class="d-flex justify-content-between align-items-center">
         <h1>Inventory</h1>
-        <a href="#" class="btn btn-primary" style="background:rgb(230, 207, 0); border: none" data-bs-toggle="modal" data-bs-target="#addInventoryModal">Add Item Stock</a>
+        <a href="#" class="btn btn-primary" style="background: #DB5C79; border: none" data-bs-toggle="modal" data-bs-target="#addInventoryModal">Add Item Stock</a>
     </div>
     <nav>
         <ol class="breadcrumb">
@@ -35,7 +36,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mt-4">
-                    <h1><span class="badge badge-custom"><?= htmlspecialchars($category) ?></span></h1>
+                    <h1><span class="badge badge-custom"><?= htmlspecialchars(ucfirst($category)) ?></span></h1>
                 </div>
                 <div class="table-responsive mt-4">
                     <table class="table table-striped">
@@ -60,8 +61,8 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-pencil-square"></i></button>
-                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-trash"></i></button>
+                                        <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
+                                        <a href="#" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-trash"></i></a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -109,7 +110,16 @@ while ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="mb-3">
                         <label for="group" class="form-label">Group</label>
-                        <input type="text" class="form-control" id="group" name="group" required>
+                        <select class="form-select" id="group" name="group" required>
+                            <option value="analgesic">Analgesic</option>
+                            <option value="antibiotic">Antibiotic</option>
+                            <option value="antidiabetic">Antidiabetic</option>
+                            <option value="antihistamine">Antihistamine</option>
+                            <option value="antihypertensive">Antihypertensive</option>
+                            <option value="NSAID">NSAID</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="text" class="form-control mt-2 d-none" id="otherGroup" name="otherGroup" placeholder="Please specify">
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -193,9 +203,23 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div>
 
 <script>
+    document.getElementById('group').addEventListener('change', function () {
+        const otherGroupInput = document.getElementById('otherGroup');
+        if (this.value === 'other') {
+            otherGroupInput.classList.remove('d-none');
+            otherGroupInput.setAttribute('required', 'required');
+        } else {
+            otherGroupInput.classList.add('d-none');
+            otherGroupInput.removeAttribute('required');
+        }
+    });
+
     document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
         event.preventDefault();
         const formData = new FormData(this);
+        if (document.getElementById('group').value === 'other') {
+            formData.set('group', document.getElementById('otherGroup').value);
+        }
 
         fetch('add_inventory.php', {
             method: 'POST',
