@@ -86,7 +86,7 @@ $result = mysqli_query($conn, $query);
               <input type="text" class="form-control" placeholder="Search for Staff" id="searchStaff" onkeyup="searchStaffFunction()">
             </div>
             <div>
-              <button class="btn btn-primary" style="background:rgb(230, 207, 0); border: none" data-bs-toggle="modal" data-bs-target="#addStaffModal">+ Add Staff</button>
+              <button class="btn btn-primary" style="background: #007bff; border: none; color: white;" data-bs-toggle="modal" data-bs-target="#addStaffModal">+ Add Staff</button>
             </div>
           </div>
 
@@ -111,8 +111,8 @@ $result = mysqli_query($conn, $query);
                   echo "<td>" . $row['email'] . "</td>";
                   echo "<td>" . $row['shifts'] . "</td>";
                   echo '<td>
-                          <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-link"><i class="bi bi-pencil-square"></i></a>
-                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-link" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
+                          <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-link" style="color: #007bff;"><i class="bi bi-pencil-square"></i></a>
+                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-link" style="color: #dc3545;" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
                         </td>';
                   echo "</tr>";
                 }
