@@ -18,7 +18,9 @@ while ($row = mysqli_fetch_assoc($result)) {
 ?>
 
 <div class="pagetitle">
-    <h1>Inventory</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Inventory</h1>
+    </div>
     <nav>
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="index.php">Home</a></li>
@@ -57,7 +59,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-item='<?= json_encode($item) ?>'><i class="bi bi-pencil-square"></i></button>
+                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-pencil-square"></i></button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -69,6 +71,54 @@ while ($row = mysqli_fetch_assoc($result)) {
     <?php endforeach; ?>
 </section>
 
+<!-- Add Inventory Modal -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1" aria-labelledby="addInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addInventoryModalLabel">Add Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addInventoryForm">
+                    <div class="mb-3">
+                        <label for="genericName" class="form-label">Generic Name</label>
+                        <input type="text" class="form-control" id="genericName" name="genericName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="brandName" class="form-label">Brand Name</label>
+                        <input type="text" class="form-control" id="brandName" name="brandName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="milligram" class="form-label">Milligram</label>
+                        <input type="text" class="form-control" id="milligram" name="milligram" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dosageForm" class="form-label">Dosage</label>
+                        <input type="text" class="form-control" id="dosageForm" name="dosageForm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="group" class="form-label">Group</label>
+                        <input type="text" class="form-control" id="group" name="group" required>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Edit Inventory Modal -->
 <div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -79,7 +129,7 @@ while ($row = mysqli_fetch_assoc($result)) {
             </div>
             <div class="modal-body">
                 <form id="editInventoryForm">
-                    <input type="hidden" id="inventoryId" name="inventoryId">
+                    <input type="hidden" id="editInventoryId" name="inventoryId">
                     <div class="mb-3">
                         <label for="editGenericName" class="form-label">Generic Name</label>
                         <input type="text" class="form-control" id="editGenericName" name="genericName" required>
@@ -93,7 +143,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                         <input type="text" class="form-control" id="editMilligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editDosageForm" class="form-label">Dosage Form</label>
+                        <label for="editDosageForm" class="form-label">Dosage</label>
                         <input type="text" class="form-control" id="editDosageForm" name="dosageForm" required>
                     </div>
                     <div class="mb-3">
@@ -110,7 +160,29 @@ while ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Inventory Modal -->
+<div class="modal fade" id="deleteInventoryModal" tabindex="-1" aria-labelledby="deleteInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteInventoryModalLabel">Delete Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item?</p>
+                <form id="deleteInventoryForm">
+                    <input type="hidden" id="deleteInventoryId" name="inventoryId">
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
                     </div>
                 </form>
             </div>
@@ -119,52 +191,99 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div>
 
 <script>
+    document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('add_inventory.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error adding item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding item: ' + error.message);
+        });
+    });
+
+    document.getElementById('editInventoryForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('edit_inventory.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error editing item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error editing item: ' + error.message);
+        });
+    });
+
+    document.getElementById('deleteInventoryForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('delete_inventory.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting item: ' + error.message);
+        });
+    });
+
     document.addEventListener('DOMContentLoaded', function () {
         const editInventoryModal = document.getElementById('editInventoryModal');
-        const editInventoryForm = document.getElementById('editInventoryForm');
+        const deleteInventoryModal = document.getElementById('deleteInventoryModal');
 
         editInventoryModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
-            const item = JSON.parse(button.getAttribute('data-item'));
+            const inventoryId = button.getAttribute('data-id');
 
-            document.getElementById('inventoryId').value = item.inventoryId;
-            document.getElementById('editGenericName').value = item.genericName;
-            document.getElementById('editBrandName').value = item.brandName;
-            document.getElementById('editMilligram').value = item.milligram;
-            document.getElementById('editDosageForm').value = item.dosageForm;
-            document.getElementById('editQuantity').value = item.quantity;
-            document.getElementById('editPrice').value = item.price;
-            document.getElementById('editGroup').value = item.group;
+            fetch('get_inventory.php?id=' + inventoryId)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('editInventoryId').value = data.inventoryId;
+                    document.getElementById('editGenericName').value = data.genericName;
+                    document.getElementById('editBrandName').value = data.brandName;
+                    document.getElementById('editMilligram').value = data.milligram;
+                    document.getElementById('editDosageForm').value = data.dosageForm;
+                    document.getElementById('editQuantity').value = data.quantity;
+                    document.getElementById('editPrice').value = data.price;
+                    document.getElementById('editGroup').value = data.group;
+                })
+                .catch(error => console.error('Error:', error));
         });
 
-        editInventoryForm.addEventListener('submit', function (event) {
-            event.preventDefault();
-            const formData = new FormData(editInventoryForm);
-
-            fetch('update_inventory.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(text => {
-                console.log('Raw response:', text);
-                try {
-                    return JSON.parse(text);
-                } catch (error) {
-                    throw new Error('Invalid JSON response');
-                }
-            })
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error updating item: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error updating item: ' + error.message);
-            });
+        deleteInventoryModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const inventoryId = button.getAttribute('data-id');
+            document.getElementById('deleteInventoryId').value = inventoryId;
         });
     });
 </script>
