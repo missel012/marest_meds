@@ -132,19 +132,19 @@ while ($row = mysqli_fetch_assoc($result)) {
                     <input type="hidden" id="editInventoryId" name="inventoryId">
                     <div class="mb-3">
                         <label for="editGenericName" class="form-label">Generic Name</label>
-                        <input type="text" class="form-control" id="editGenericName" name="genericName" required>
+                        <input type="text" class="form-control" id="editGenericName" name="genericName" disabled>
                     </div>
                     <div class="mb-3">
                         <label for="editBrandName" class="form-label">Brand Name</label>
-                        <input type="text" class="form-control" id="editBrandName" name="brandName" required>
+                        <input type="text" class="form-control" id="editBrandName" name="brandName" disabled>
                     </div>
                     <div class="mb-3">
                         <label for="editMilligram" class="form-label">Milligram</label>
-                        <input type="text" class="form-control" id="editMilligram" name="milligram" required>
+                        <input type="text" class="form-control" id="editMilligram" name="milligram" disabled>
                     </div>
                     <div class="mb-3">
                         <label for="editDosageForm" class="form-label">Dosage</label>
-                        <input type="text" class="form-control" id="editDosageForm" name="dosageForm" required>
+                        <input type="text" class="form-control" id="editDosageForm" name="dosageForm" disabled>
                     </div>
                     <div class="mb-3">
                         <label for="editQuantity" class="form-label">Quantity</label>
@@ -152,11 +152,11 @@ while ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="mb-3">
                         <label for="editPrice" class="form-label">Price</label>
-                        <input type="number" step="0.01" class="form-control" id="editPrice" name="price" required>
+                        <input type="number" step="0.01" class="form-control" id="editPrice" name="price" disabled>
                     </div>
                     <div class="mb-3">
                         <label for="editGroup" class="form-label">Group</label>
-                        <input type="text" class="form-control" id="editGroup" name="group" required>
+                        <input type="text" class="form-control" id="editGroup" name="group" disabled>
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -215,7 +215,9 @@ while ($row = mysqli_fetch_assoc($result)) {
 
     document.getElementById('editInventoryForm').addEventListener('submit', function (event) {
         event.preventDefault();
-        const formData = new FormData(this);
+        const formData = new FormData();
+        formData.append('inventoryId', document.getElementById('editInventoryId').value);
+        formData.append('quantity', document.getElementById('editQuantity').value);
 
         fetch('edit_inventory.php', {
             method: 'POST',

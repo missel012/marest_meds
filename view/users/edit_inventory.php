@@ -6,20 +6,11 @@ include("../../dB/config.php");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inventoryId = $_POST['inventoryId'];
-    $genericName = $_POST['genericName'];
-    $brandName = $_POST['brandName'];
-    $milligram = $_POST['milligram'];
-    $dosageForm = $_POST['dosageForm'];
     $quantity = $_POST['quantity'];
-    $price = $_POST['price'];
-    $group = $_POST['group'];
 
-    // Removed image selection functionality
-    // $image = $_POST['image'];
-
-    $query = "UPDATE inventory SET genericName=?, brandName=?, milligram=?, dosageForm=?, quantity=?, price=?, `group`=? WHERE inventoryId=?";
+    $query = "UPDATE inventory SET quantity=? WHERE inventoryId=?";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("ssssidsi", $genericName, $brandName, $milligram, $dosageForm, $quantity, $price, $group, $inventoryId);
+    $stmt->bind_param("ii", $quantity, $inventoryId);
 
     if ($stmt->execute()) {
         echo json_encode(['success' => true]);
