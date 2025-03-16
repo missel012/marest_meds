@@ -44,7 +44,8 @@ while ($row = mysqli_fetch_assoc($result)) {
                                 <?php foreach ($inventory as $category => $items) : ?>
                                     <?php foreach ($items as $item) : ?>
                                         <div class="col-lg-3">
-                                            <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '', <?php echo $item['inventoryId']; ?>)">
+                                            <button type="button" class="btn custom-card mt-2 mb-2"
+                                                onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '<?php echo $item['group']; ?>', <?php echo $item['inventoryId']; ?>)">
                                                 <div class="card-body text-center" style="font-size: 0.875rem;">
                                                     <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?></h5>
                                                     <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $item['inventoryId']; ?>"><?php echo $item['quantity']; ?></span></h6>
@@ -62,7 +63,8 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     <!-- Category Tab -->
                                     <?php foreach ($items as $item) : ?>
                                         <div class="col-lg-3">
-                                            <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '', <?php echo $item['inventoryId']; ?>)">
+                                            <button type="button" class="btn custom-card mt-2 mb-2"
+                                                onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '<?php echo $item['group']; ?>', <?php echo $item['inventoryId']; ?>)">
                                                 <div class="card-body text-center" style="font-size: 0.875rem;">
                                                     <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?></h5>
                                                     <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $item['inventoryId']; ?>"><?php echo $item['quantity']; ?></span></h6>
@@ -81,7 +83,10 @@ while ($row = mysqli_fetch_assoc($result)) {
             <!-- Right Card -->
             <div class="card" style="flex: 1.5; margin-left: 10px;">
                 <div class="card-body">
-                    <h5 class="card-title">Order Summary</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title">Order Summary</h5>
+                        <button type="button" class="btn btn-outline-danger" id="delete-btn" style="display: none;" onclick="clearCart()">Delete All</button>
+                    </div>
                     <div id="cart-items">
                         <!-- Cart items will be dynamically added here -->
                     </div>
@@ -90,7 +95,9 @@ while ($row = mysqli_fetch_assoc($result)) {
                             <div class="card-body">
                                 <h5 class="card-title" style="color: black;">Total</h5>
                                 <p id="total-amount" class="card-text" style="color: black;">₱0.00</p>
-                                <button type="button" class="btn btn-outline-primary" id="pay-now-btn">Pay Now</button>
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-primary" id="pay-now-btn">Pay Now</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -113,7 +120,8 @@ include("./includes/footer.php");
         text-align: left;
         padding: 0;
         width: 100%;
-        height: 130px; /* Set a fixed height */
+        height: 130px;
+        /* Set a fixed height */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -172,10 +180,12 @@ include("./includes/footer.php");
 
     .cart-item .item-details {
         flex: 1;
-        font-size: 0.875rem; /* Same font size as left card */
+        font-size: 0.875rem;
+        /* Same font size as left card */
         display: flex;
         flex-direction: column;
-        justify-content: center; /* Center vertically */
+        justify-content: center;
+        /* Center vertically */
     }
 
     .cart-item .item-quantity {
@@ -189,14 +199,18 @@ include("./includes/footer.php");
         color: white;
         padding: 5px 10px;
         cursor: pointer;
-        border-radius: 0.25rem; /* Same border radius as Pay Now button */
-        width: 40px; /* Same width as Pay Now button */
-        height: 40px; /* Same height as Pay Now button */
+        border-radius: 0.25rem;
+        /* Same border radius as Pay Now button */
+        width: 40px;
+        /* Same width as Pay Now button */
+        height: 40px;
+        /* Same height as Pay Now button */
     }
 
     .cart-item .item-quantity button:hover {
         background-color: #5bbd4a;
-        color: white; /* Ensure text color remains white */
+        color: white;
+        /* Ensure text color remains white */
     }
 
     .cart-item .item-quantity span {
@@ -207,17 +221,20 @@ include("./includes/footer.php");
         display: flex;
         align-items: center;
         cursor: pointer;
-        margin-left: 10px; /* Add space between the plus button and the delete button */
+        margin-left: 10px;
+        /* Add space between the plus button and the delete button */
     }
 
     .cart-item .item-quantity .icon i {
         font-size: 1.2rem;
-        color: #DB5C79; /* Change trash icon color */
+        color: #DB5C79;
+        /* Change trash icon color */
         transition: color 0.3s ease;
     }
 
     .cart-item .item-quantity .icon:hover i {
-        color: #FFDEE6; /* Change trash icon color on hover */
+        color: #D74769;
+        /* Change trash icon color on hover */
     }
 
     /* Pay Now button styles */
@@ -225,48 +242,80 @@ include("./includes/footer.php");
         background-color: #6CCF54;
         border-color: #6CCF54;
         color: white;
-        border-radius: 0.25rem; /* Ensure border radius matches */
-        width: 100px; /* Set width */
-        height: 40px; /* Set height */
+        border-radius: 0.25rem;
+        /* Ensure border radius matches */
+        width: 100px;
+        /* Set width */
+        height: 40px;
+        /* Set height */
     }
 
     #pay-now-btn:hover {
         background-color: #5bbd4a;
         border-color: #5bbd4a;
-        color: white; /* Ensure text color remains white */
+        color: white;
+        /* Ensure text color remains white */
     }
 
     /* Scrollable tabs */
     #pills-tab {
-        overflow-x: auto; 
+        overflow-x: auto;
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
     }
 
     #pills-tab::-webkit-scrollbar {
-        display: none; /* Hide scrollbar */
+        display: none;
+        /* Hide scrollbar */
     }
 
     .nav-pills .nav-link {
         display: inline-block;
-        white-space: nowrap; /* Ensure tabs are in one row */
+        white-space: nowrap;
+        /* Ensure tabs are in one row */
     }
 
     .nav-pills {
-        flex-wrap: nowrap; /* Prevent tabs from wrapping to the next line */
+        flex-wrap: nowrap;
+        /* Prevent tabs from wrapping to the next line */
+    }
+
+    #delete-btn {
+        background-color: #DB5C79;
+        border-color: #DB5C79;
+        color: white;
+        border-radius: 0.25rem;
+        width: 100px;
+        height: 40px;
+        margin-left: auto;
+        /* Push it to the right */
+        display: block;
+        /* Ensure it stays aligned */
+    }
+
+    #delete-btn:hover {
+        background-color: #D74769;
+        border-color: #D74769;
+        color: white;
     }
 </style>
 
 <script>
     let cart = {};
 
-    function addToCart(genericName, brandName, itemPrice, itemImage, inventoryId) {
+    function addToCart(genericName, brandName, itemPrice, group, inventoryId) {
         const itemName = `${genericName} ${brandName}`;
         const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
         const originalQuantity = parseInt(stockElements[0].innerText);
-        
+
         if (!cart[itemName]) {
-            cart[itemName] = { quantity: 0, price: itemPrice, image: itemImage, inventoryId: inventoryId, originalQuantity: originalQuantity };
+            cart[itemName] = {
+                quantity: 0,
+                price: itemPrice,
+                inventoryId: inventoryId,
+                medicineGroup: group, // Store medicineGroup
+                originalQuantity: originalQuantity
+            };
         }
         if (cart[itemName].quantity < originalQuantity) {
             cart[itemName].quantity++;
@@ -275,10 +324,12 @@ include("./includes/footer.php");
         }
     }
 
+
     function updateCart() {
         const cartItems = document.getElementById('cart-items');
         const cartSummary = document.getElementById('cart-summary');
         const totalAmount = document.getElementById('total-amount');
+        const deleteBtn = document.getElementById('delete-btn'); // Reference delete button
         let total = 0;
 
         cartItems.innerHTML = '';
@@ -287,26 +338,43 @@ include("./includes/footer.php");
             const totalPrice = item.quantity * item.price;
             total += totalPrice;
             cartItems.innerHTML += `
-                <div class="cart-item">
-                    <div class="item-details">
-                        <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">${itemName}</h5>
-                        <p class="card-text" style="font-size: 0.75rem;">₱${totalPrice.toFixed(2)}</p>
-                    </div>
-                    <div class="item-quantity">
-                        <button onclick="changeQuantity('${itemName}', -1)" ${item.quantity === 0 ? 'disabled' : ''}>-</button>
-                        <span>${item.quantity}</span>
-                        <button onclick="changeQuantity('${itemName}', 1)" ${item.quantity === item.originalQuantity ? 'disabled' : ''}>+</button>
-                        <div class="icon" onclick="removeFromCart('${itemName}')">
-                            <i class="bi bi-trash"></i>
-                        </div>
+            <div class="cart-item">
+                <div class="item-details">
+                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">${itemName}</h5>
+                    <p class="card-text" style="font-size: 0.75rem;">₱${totalPrice.toFixed(2)}</p>
+                </div>
+                <div class="item-quantity">
+                    <button onclick="changeQuantity('${itemName}', -1)" ${item.quantity === 0 ? 'disabled' : ''}>-</button>
+                    <span>${item.quantity}</span>
+                    <button onclick="changeQuantity('${itemName}', 1)" ${item.quantity === item.originalQuantity ? 'disabled' : ''}>+</button>
+                    <div class="icon" onclick="removeFromCart('${itemName}')">
+                        <i class="bi bi-trash"></i>
                     </div>
                 </div>
-            `;
+            </div>
+        `;
         }
 
         totalAmount.innerText = `₱${total.toFixed(2)}`;
         cartSummary.style.display = total > 0 ? 'block' : 'none';
+
+        // Show delete button if cart has items, hide otherwise
+        if (Object.keys(cart).length > 0) {
+            deleteBtn.style.display = "block";
+        } else {
+            deleteBtn.style.display = "none";
+        }
     }
+
+    // Function to clear the cart
+    function clearCart() {
+        for (const itemName in cart) {
+            updateStock(cart[itemName].inventoryId, cart[itemName].quantity);
+        }
+        cart = {}; // Clear the cart object
+        updateCart();
+    }
+
 
     function changeQuantity(itemName, change) {
         if (cart[itemName]) {
@@ -339,16 +407,45 @@ include("./includes/footer.php");
     }
 
     document.getElementById('pay-now-btn').addEventListener('click', function() {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'processOrder.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                alert('Order placed successfully!');
-                cart = {};
-                updateCart();
-            }
-        };
-        xhr.send(JSON.stringify(cart));
+        let orderData = {};
+
+        for (const itemName in cart) {
+            let item = cart[itemName];
+            orderData[itemName] = {
+                inventoryId: item.inventoryId,
+                genericName: itemName.split(' ')[0], // Extract generic name
+                brandName: itemName.split(' ')[1], // Extract brand name
+                group: item.group, // Include medicineGroup
+                quantity: item.quantity,
+                price: item.price
+            };
+        }
+
+        fetch('post_order.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Order placed successfully!');
+                    cart = {}; // Clear cart
+                    updateCart();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    });
+
+    document.getElementById('delete-all-btn').addEventListener('click', function() {
+        for (const itemName in cart) {
+            updateStock(cart[itemName].inventoryId, cart[itemName].quantity);
+        }
+        cart = {};
+        updateCart();
     });
 </script>
