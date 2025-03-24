@@ -401,12 +401,14 @@ include("./includes/footer.php");
         `;
         }
 
-        // Add the "Pay Now" button once after all items
-        cartItems.innerHTML += `
-        <div class="d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-primary" id="pay-now-btn">Pay Now</button>
-        </div>
-        `;
+        // Add the "Pay Now" button only if there are items in the cart
+        if (Object.keys(cart).length > 0) {
+            cartItems.innerHTML += `
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-primary" id="pay-now-btn">Pay Now</button>
+            </div>
+            `;
+        }
 
         totalAmount.innerText = `₱${total.toFixed(2)}`;
         cartSummary.style.display = total > 0 ? 'block' : 'none';
@@ -435,46 +437,48 @@ include("./includes/footer.php");
         updateDateTime();
 
         // Attach event listener to the Pay Now button
-        document.getElementById('pay-now-btn').addEventListener('click', function() {
-            let orderData = {};
+        if (Object.keys(cart).length > 0) {
+            document.getElementById('pay-now-btn').addEventListener('click', function() {
+                let orderData = {};
 
-            for (const itemName in cart) {
-                let item = cart[itemName];
-                orderData[itemName] = {
-                    inventoryId: item.inventoryId,
-                    genericName: itemName.split(' ')[0], // Extract generic name
-                    brandName: itemName.split(' ')[1], // Extract brand name
-                    group: item.group, // Include medicineGroup
-                    quantity: item.quantity,
-                    price: item.price
-                };
-            }
+                for (const itemName in cart) {
+                    let item = cart[itemName];
+                    orderData[itemName] = {
+                        inventoryId: item.inventoryId,
+                        genericName: itemName.split(' ')[0], // Extract generic name
+                        brandName: itemName.split(' ')[1], // Extract brand name
+                        group: item.group, // Include medicineGroup
+                        quantity: item.quantity,
+                        price: item.price
+                    };
+                }
 
-            fetch('post_order.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(orderData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Order placed successfully!');
-                        cart = {}; // Clear cart
-                        updateCart();
-                        // Increment the nextOrderId and update the receipt content
-                        nextOrderId++;
-                        updateReceiptOrderId();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => console.error('Error:', error))
-                .finally(() => {
-                    location.reload(); // Reload the page after the order is placed
-                });
-        });
+                fetch('post_order.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(orderData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Order placed successfully!');
+                            cart = {}; // Clear cart
+                            updateCart();
+                            // Increment the nextOrderId and update the receipt content
+                            nextOrderId++;
+                            updateReceiptOrderId();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error))
+                    .finally(() => {
+                        location.reload(); // Reload the page after the order is placed
+                    });
+            });
+        }
     }
 
     function updateReceiptOrderId() {

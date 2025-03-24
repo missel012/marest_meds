@@ -38,8 +38,12 @@ $staff_data = mysqli_fetch_assoc($staff_result);
 $staff_on_shift = $staff_data['staff_on_shift'];
 
 // Fetch orders data for the graph
-$query = "SELECT DATE(datetime) as orderDate, SUM(total) as totalRevenue FROM `order` GROUP BY orderDate ORDER BY orderDate DESC LIMIT 10";
+$query = "SELECT DATE(datetime) as order_date, COUNT(orderId) as total_orders FROM `order` GROUP BY DATE(datetime)";
 $result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die("Query failed: " . mysqli_error($conn));
+}
 
 $orders = [];
 while ($row = mysqli_fetch_assoc($result)) {
@@ -149,12 +153,12 @@ while ($row = mysqli_fetch_assoc($result)) {
         <script>
           document.addEventListener("DOMContentLoaded", () => {
             const ordersData = <?= json_encode($orders) ?>;
-            const labels = ordersData.map(order => order.orderDate);
-            const data = ordersData.map(order => order.totalRevenue);
+            const labels = ordersData.map(order => order.order_date);
+            const data = ordersData.map(order => order.total_orders);
 
             new ApexCharts(document.querySelector("#areaChart"), {
               series: [{
-                name: "Total Revenue",
+                name: "Total Orders",
                 data: data
               }],
               chart: {
@@ -175,7 +179,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                 colors: ['#DB5C79', '#FFDEE6']
               },
               subtitle: {
-                text: 'Revenue Movements',
+                text: 'Order Movements',
                 align: 'left'
               },
               labels: labels,
