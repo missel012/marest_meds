@@ -14,11 +14,19 @@ if (!$data) {
 $conn->begin_transaction();
 
 try {
+    // Insert into order table
+    $datetime = date("Y-m-d H:i:s");
+
+    $orderStmt = $conn->prepare("INSERT INTO `order` (datetime) VALUES (?)");
+    $orderStmt->bind_param("s", $datetime);
+    $orderStmt->execute();
+    $orderId = $orderStmt->insert_id;
+    $orderStmt->close();
+
     foreach ($data as $itemName => $item) {
         $inventoryId = intval($item['inventoryId']);
         $quantity = intval($item['quantity']);
         $price = floatval($item['price']);
-        $datetime = date("Y-m-d H:i:s");
 
         if ($quantity <= 0) {
             continue;
@@ -34,10 +42,7 @@ try {
             throw new Exception("Failed to fetch inventory details for inventoryId: " . $inventoryId);
         }
 
-        error_log("Fetched details - Medicine Group: " . var_export($group, true));
         $query->close();
-
-
 
         if ($currentStock < $quantity) {
             throw new Exception("Not enough stock for $itemName");
@@ -46,13 +51,14 @@ try {
         // Calculate total price
         $total = $quantity * $price;
 
-        // Insert into orders table with all fields
-        $stmt = $conn->prepare("
-            INSERT INTO `order` (inventoryId, genericName, brandName, milligram, dosageForm, quantity, price, `group`, total, datetime) 
+        // Insert into order_items table
+        $itemStmt = $conn->prepare("
+            INSERT INTO order_items (orderId, inventoryId, genericName, brandName, milligram, dosageForm, quantity, price, `group`, total) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->bind_param(
-            "issisidsid",
+        $itemStmt->bind_param(
+            "iissisidsd",
+            $orderId,
             $inventoryId,
             $genericName,
             $brandName,
@@ -61,11 +67,10 @@ try {
             $quantity,
             $price,
             $group,
-            $total,
-            $datetime
+            $total
         );
-        $stmt->execute();
-        $stmt->close();
+        $itemStmt->execute();
+        $itemStmt->close();
 
         // Update stock
         $update = $conn->prepare("UPDATE inventory SET quantity = quantity - ? WHERE inventoryId = ?");

@@ -12,6 +12,12 @@ $inventory = [];
 while ($row = mysqli_fetch_assoc($result)) {
     $inventory[$row['group']][] = $row;
 }
+
+// Fetch the last order ID from the database
+$orderQuery = "SELECT MAX(orderId) as lastOrderId FROM `order`";
+$orderResult = mysqli_query($conn, $orderQuery);
+$orderRow = mysqli_fetch_assoc($orderResult);
+$nextOrderId = $orderRow['lastOrderId'] + 1;
 ?>
 
 <div class="pagetitle">
@@ -82,7 +88,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 
             <!-- Right Card -->
             <div class="card" style="flex: 1.5; margin-left: 10px;">
-                <div class="card-body">
+                <div class="card-body" style="font-family: inherit;">
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="card-title">Order Summary</h5>
                         <button type="button" class="btn btn-outline-danger" id="delete-btn" style="display: none;" onclick="clearCart()">Delete All</button>
@@ -90,11 +96,11 @@ while ($row = mysqli_fetch_assoc($result)) {
                     <div id="cart-items">
                         <!-- Cart items will be dynamically added here -->
                     </div>
-                    <div id="cart-summary" style="display: none;">
-                        <div class="card mt-3" style="background-color: #E9ECE9; box-shadow: none;">
+                    <div id="cart-summary" style="display: none; font-family: Consolas;">
+                        <div class="card mt-3" style="background-color: white; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 10px rgba(0, 0, 0, 0.15);">
                             <div class="card-body">
-                                <h5 class="card-title" style="color: black;">Total</h5>
-                                <p id="total-amount" class="card-text" style="color: black;">₱0.00</p>
+                                <h5 class="card-title" style="color: black; ">Total</h5>
+                                <p id="total-amount" class="card-text" style="color: black; ">₱0.00</p>
                                 <div class="d-flex justify-content-between">
                                     <button type="button" class="btn btn-outline-primary" id="pay-now-btn">Pay Now</button>
                                 </div>
@@ -298,6 +304,15 @@ include("./includes/footer.php");
         border-color: #D74769;
         color: white;
     }
+
+    /* Center logo horizontally */
+    .logo {
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        margin-top: 15px;
+        /* Add top margin to match the space below the Pay Now button */
+    }
 </style>
 
 <script>
@@ -333,6 +348,29 @@ include("./includes/footer.php");
         let total = 0;
 
         cartItems.innerHTML = '';
+        let receiptContent = `
+            <div class="d-flex align-items-center justify-content-center">
+                <a class="logo d-flex align-items-center" style="margin-top: 30px;">
+                    <img src="../../assets/img/marest_logo_bw.png" alt="Logo">
+                    <span class="d-none d-lg-block">
+                        <span style="color:  black ; font-weight: bold;">Marest</span>
+                        <span style="color: #525252; font-weight: bold;">Meds</span>
+                    </span>
+                </a>
+            </div><!-- End Logo -->
+            <div id="receipt-datetime" class="text-center" style="margin-top: 10px; font-size: 0.875rem;"></div>
+            <div class="text-center" style="margin-top: 10px; font-size: 0.875rem;">
+                <hr style="border-top: 1px dashed black;">
+                Order ID: <?php echo $nextOrderId; ?>
+                <hr style="border-top: 1px dashed black;">
+            </div>
+            <div style="display: flex; justify-content: space-between; font-family: inherit; color: black; font-size: 0.875rem; font-weight: bold; margin-bottom: 30px;">
+                <span style="flex: 1;">Medicine</span>
+                <span style="flex: 1; text-align: center;">Quantity</span>
+                <span style="flex: 1; text-align: right;">Unit Price</span>
+            </div>
+        `;
+
         for (const itemName in cart) {
             const item = cart[itemName];
             const totalPrice = item.quantity * item.price;
@@ -353,7 +391,22 @@ include("./includes/footer.php");
                 </div>
             </div>
         `;
+
+            receiptContent += `
+            <div style="display: flex; justify-content: space-between; font-family: inherit; color: black; font-size: 0.875rem; margin-top: -10px;">
+                <h5 class="card-title" style="font-size: 0.75rem; font-family: Consolas; margin-top: -1rem; flex: 1; color: black;">${itemName}</h5>
+                <span style="font-size: 0.75rem; flex: 1; text-align: center;">${item.quantity}</span>
+                <p class="card-text" style="font-size: 0.75rem; flex: 1; text-align: right;">₱${totalPrice.toFixed(2)}</p>
+            </div>
+        `;
         }
+
+        // Add the "Pay Now" button once after all items
+        cartItems.innerHTML += `
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-primary" id="pay-now-btn">Pay Now</button>
+        </div>
+        `;
 
         totalAmount.innerText = `₱${total.toFixed(2)}`;
         cartSummary.style.display = total > 0 ? 'block' : 'none';
@@ -364,7 +417,96 @@ include("./includes/footer.php");
         } else {
             deleteBtn.style.display = "none";
         }
+
+        // Clear previous receipt content and insert new receipt content into the gray container
+        const receiptContainer = cartSummary.querySelector('.card-body');
+        receiptContainer.innerHTML = receiptContent + `
+            <hr style="border-top: 1px solid black; margin-top: -5px; margin-bottom: -5px;">
+            <div style="display: flex; justify-content: space-between; font-family: inherit; color: black; font-size: 0.875rem; align-items: center;">
+                <h5 class="card-title" style="color: black; font-family: Consolas; font-size: 0.875rem; margin-right: auto;">Total</h5>
+                <p id="total-amount" class="card-text" style="color: black; font-size: 0.875rem; text-align: right; margin-left: auto;">₱${total.toFixed(2)}</p>
+            </div>
+            <div style="display: flex; justify-content: center; font-family: inherit; color: black; font-size: 0.875rem; align-items: center; margin-bottom: 10px;">
+                <span style="font-size: 0.875rem; color: black; font-family: Consolas; ">Thank you for shopping with us!</span>
+            </div>
+        `;
+
+        // Update the receipt date and time
+        updateDateTime();
+
+        // Attach event listener to the Pay Now button
+        document.getElementById('pay-now-btn').addEventListener('click', function() {
+            let orderData = {};
+
+            for (const itemName in cart) {
+                let item = cart[itemName];
+                orderData[itemName] = {
+                    inventoryId: item.inventoryId,
+                    genericName: itemName.split(' ')[0], // Extract generic name
+                    brandName: itemName.split(' ')[1], // Extract brand name
+                    group: item.group, // Include medicineGroup
+                    quantity: item.quantity,
+                    price: item.price
+                };
+            }
+
+            fetch('post_order.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(orderData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Order placed successfully!');
+                        cart = {}; // Clear cart
+                        updateCart();
+                        // Increment the nextOrderId and update the receipt content
+                        nextOrderId++;
+                        updateReceiptOrderId();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error))
+                .finally(() => {
+                    location.reload(); // Reload the page after the order is placed
+                });
+        });
     }
+
+    function updateReceiptOrderId() {
+        const receiptOrderIdElement = document.querySelector('.text-center').querySelector('div:nth-child(3)');
+        if (receiptOrderIdElement) {
+            receiptOrderIdElement.innerHTML = `
+                <hr style="border-top: 1px dashed black;">
+                Order ID: ${nextOrderId}
+                <hr style="border-top: 1px dashed black;">
+            `;
+        }
+    }
+
+    function updateDateTime() {
+        const dateTimeElement = document.getElementById('receipt-datetime');
+        if (dateTimeElement) {
+            const now = new Date();
+            const formattedDateTime = now.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: true
+            });
+            dateTimeElement.innerText = formattedDateTime;
+        }
+    }
+
+    // Update the date and time every second
+    setInterval(updateDateTime, 1000);
 
     // Function to clear the cart
     function clearCart() {
@@ -405,41 +547,6 @@ include("./includes/footer.php");
             stockElement.innerText = currentStock + change;
         });
     }
-
-    document.getElementById('pay-now-btn').addEventListener('click', function() {
-        let orderData = {};
-
-        for (const itemName in cart) {
-            let item = cart[itemName];
-            orderData[itemName] = {
-                inventoryId: item.inventoryId,
-                genericName: itemName.split(' ')[0], // Extract generic name
-                brandName: itemName.split(' ')[1], // Extract brand name
-                group: item.group, // Include medicineGroup
-                quantity: item.quantity,
-                price: item.price
-            };
-        }
-
-        fetch('post_order.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(orderData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Order placed successfully!');
-                    cart = {}; // Clear cart
-                    updateCart();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    });
 
     document.getElementById('delete-all-btn').addEventListener('click', function() {
         for (const itemName in cart) {
