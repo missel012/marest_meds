@@ -7,10 +7,14 @@ include("../../db/config.php"); // Include database configuration
 
 // Handle form submission for adding new staff
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
-  $staff_name = $_POST['staff_name'];
-  $email = $_POST['email'];
+  $staff_name_email = $_POST['staff_name_email'];
   $role = $_POST['role'];
   $shifts = $_POST['shifts'];
+
+  // Extract name and email from the selected option
+  preg_match('/^(.*?)\s\((.*?)\)$/', $staff_name_email, $matches);
+  $staff_name = $matches[1]; // Extracted name
+  $email = $matches[2]; // Extracted email
 
   // Check if the email exists in the user table
   $email_check_query = "SELECT * FROM users WHERE email = '$email'";
@@ -32,6 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
       // Insert new staff into the database
       $insert_query = "INSERT INTO staff (staff_name, staff_id, email, shifts) VALUES ('$staff_name', '$new_id', '$email', '$shifts')";
       mysqli_query($conn, $insert_query);
+
+      // Update the role in the users table
+      $user_role = ($role === 'admin') ? 'admin' : 'user';
+      $update_user_query = "UPDATE users SET role = '$user_role' WHERE email = '$email'";
+      mysqli_query($conn, $update_user_query);
+
       $_SESSION['message'] = "Staff added successfully.";
       $_SESSION['code'] = "success";
     } else {
@@ -57,6 +67,39 @@ if (isset($_GET['delete_id'])) {
   exit();
 }
 
+// Handle role assignment
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignRole'])) {
+  $email = $_POST['email']; // Use email instead of ID
+  $role = $_POST['role']; // 'admin' or 'staff'
+
+  // Update the role in the staff table
+  $updateStaffQuery = "UPDATE staff SET role = ? WHERE email = ?";
+  $stmt = $conn->prepare($updateStaffQuery);
+  $stmt->bind_param("ss", $role, $email);
+
+  if ($stmt->execute()) {
+    // Update the role in the users table
+    $userRole = ($role === 'admin') ? 'admin' : 'user';
+    $updateUserQuery = "UPDATE users SET role = ? WHERE email = ?";
+    $stmtUser = $conn->prepare($updateUserQuery);
+    $stmtUser->bind_param("ss", $userRole, $email);
+
+    if ($stmtUser->execute()) {
+      $_SESSION['message'] = "Role assigned successfully";
+      $_SESSION['code'] = "success";
+    } else {
+      $_SESSION['message'] = "Failed to update role in users table";
+      $_SESSION['code'] = "error";
+    }
+  } else {
+    $_SESSION['message'] = "Failed to assign role";
+    $_SESSION['code'] = "error";
+  }
+
+  header("location: staff.php");
+  exit();
+}
+
 // Determine current shift
 date_default_timezone_set('Asia/Manila'); // Set the timezone
 $current_hour = date('H');
@@ -73,6 +116,10 @@ if ($current_hour >= 8 && $current_hour < 12) {
 // Fetch staff data from the database
 $query = "SELECT staff_name, staff_id, email, shifts FROM staff";
 $result = mysqli_query($conn, $query);
+
+// Fetch users without assigned roles
+$unassigned_users_query = "SELECT firstName, lastName, email FROM users WHERE role IS NULL OR role = ''";
+$unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
 ?>
 
 
@@ -158,12 +205,15 @@ $result = mysqli_query($conn, $query);
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label for="staff_name" class="form-label">Staff Name</label>
-            <input type="text" class="form-control" id="staff_name" name="staff_name" required>
-          </div>
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" required>
+            <label for="staff_name_email" class="form-label">Staff Name and Email</label>
+            <select class="form-select" id="staff_name_email" name="staff_name_email" required>
+              <option value="" disabled selected>Select Staff</option>
+              <?php while ($user = mysqli_fetch_assoc($unassigned_users_result)) : ?>
+                <option value="<?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName'] . ' (' . $user['email'] . ')') ?>">
+                  <?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName'] . ' (' . $user['email'] . ')') ?>
+                </option>
+              <?php endwhile; ?>
+            </select>
           </div>
           <div class="mb-3">
             <label for="role" class="form-label">Role</label>
@@ -184,6 +234,37 @@ $result = mysqli_query($conn, $query);
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <button type="submit" class="btn btn-primary" name="add_staff">Add Staff</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modify Staff Modal -->
+<div class="modal fade" id="modifyStaffModal" tabindex="-1" aria-labelledby="modifyStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modifyStaffModalLabel">Modify Staff Role</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="email" class="form-label">Staff Email</label>
+            <input type="email" class="form-control" id="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="role" class="form-label">Role</label>
+            <select class="form-select" id="role" name="role" required>
+              <option value="admin">Admin</option>
+              <option value="staff">Staff</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" name="assignRole">Update Role</button>
         </div>
       </form>
     </div>
