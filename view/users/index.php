@@ -37,6 +37,12 @@ $staff_result = mysqli_query($conn, $staff_query);
 $staff_data = mysqli_fetch_assoc($staff_result);
 $staff_on_shift = $staff_data['staff_on_shift'];
 
+// Fetch total number of orders
+$total_orders_query = "SELECT COUNT(orderId) AS total_orders FROM `order`";
+$total_orders_result = mysqli_query($conn, $total_orders_query);
+$total_orders_data = mysqli_fetch_assoc($total_orders_result);
+$total_orders = $total_orders_data['total_orders'];
+
 // Fetch orders data for the graph
 $query = "SELECT DATE(datetime) as order_date, COUNT(orderId) as total_orders FROM `order` GROUP BY DATE(datetime)";
 $result = mysqli_query($conn, $query);
@@ -90,14 +96,14 @@ while ($row = mysqli_fetch_assoc($result)) {
   </div>
 
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card staff-card">
+    <div class="card info-card total-orders-card">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-people"></i>
+          <i class="bi bi-cart"></i>
         </div>
-        <h6 class="mt-3">Staffs on Shift</h6>
-        <h2><?php echo $staff_on_shift; ?></h2>
-        <a href="staff.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Staffs <i class="bi bi-chevron-right"></i></a>
+        <h6 class="mt-3">Total Orders Made</h6>
+        <h2><?php echo $total_orders; ?></h2>
+        <a href="prescriptionOrders.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Orders <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
   </div>
