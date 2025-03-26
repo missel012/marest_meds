@@ -36,6 +36,49 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hammersmith+One&family=Open+Sans:wght@400;500&display=swap');
+    body {
+      background: url('assets/img/bg.jpeg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    main {
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .card {
+      background: url('assets/img/bgcard.png') no-repeat center center;
+      background-size: cover;
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); /* Add shadow */
+    }
+    .form-control, .btn, .form-select {
+      border-radius: 20px; /* Make input fields, buttons, and select more rounded */
+    }
+    .form-check-input {
+      border-radius: 50%; /* Make checkbox more rounded */
+    }
+    .card-title {
+      font-family: 'Hammersmith One', sans-serif;
+      color: #DB5C79;
+    }
+    .btn-primary {
+      background-color: #DB5C79;
+      color: white;
+      border: none;
+      font-family: 'Hammersmith One', sans-serif;
+    }
+    .btn-primary:hover {
+      background-color: #C04A68;
+    }
+    .form-label {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400; /* Medium weight */
+    }
+    .text-center.small {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400; /* Medium weight */
+    }
+  </style>
 </head>
 <?php session_start();?>
 <body>
@@ -124,10 +167,10 @@
 
                   
                     <div class="col-12">
-                      <button class="btn btn-primary w-100" type="submit" name="registration" >Create Account</button>
+                      <button class="btn btn-primary w-100" type="submit" name="registration">Create Account</button>
                     </div>
                     <div class="col-12">
-                      <p class="small mb-0">Already have an account? <a href="./login.php">Log in</a></p>
+                      <p class="small mb-0">Already have an account? <a href="./login.php" style="color: #DB5C79;">Log in</a></p>
                     </div>
                   </form>
 

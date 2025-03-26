@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
@@ -15,7 +18,9 @@ while ($row = mysqli_fetch_assoc($result)) {
 ?>
 
 <div class="pagetitle">
-    <h1>Inventory</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Inventory</h1>
+    </div>
     <nav>
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="index.php">Home</a></li>
@@ -27,91 +32,268 @@ while ($row = mysqli_fetch_assoc($result)) {
 <section class="section">
     <?php foreach ($inventory as $category => $items) : ?>
         <div class="card">
-            <div class="card-body py-1">
-                <h1 class="mt-4"><span class="badge badge-custom"><?= htmlspecialchars($category) ?></span></h1>
-
-                <div id="carousel-<?= strtolower(str_replace(' ', '-', $category)) ?>" class="carousel slide mt-4">
-                    <div class="carousel-inner">
-                        <?php
-                        $chunks = array_chunk($items, 4); // Display 4 items per carousel slide
-                        foreach ($chunks as $index => $chunk) :
-                        ?>
-                            <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
-                                <div class="row">
-                                    <?php foreach ($chunk as $item) : ?>
-                                        <div class="col-lg-3">
-                                            <div class="card mt-4">
-                                                <div class="image-container">
-                                                    <img src="<?= str_replace('C:/xampp/htdocs/datahan_eblacas/', '../../', $item['image']) ?>" class="card-img-top" alt="<?= htmlspecialchars($item['brandName']) ?>">
-                                                </div>
-                                                <div class="card-body text-center">
-                                                    <h5 class="card-title"><?= htmlspecialchars($item['genericName']) . ' ' . htmlspecialchars($item['brandName']) . ' ' . $item['milligram'] . 'ml ' . $item['dosageForm'] ?></h5>
-                                                    <h6 class="card-subtitle mb-2 text-muted">Quantity in Stock: <?= $item['quantity'] ?></h6>
-                                                    <p class="card-text">₱<?= number_format($item['price'], 2) ?></p>
-                                                </div>
-                                                <button type="button" class="btn btn-custom">Check Details</button>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                    <?php if (count($items) > 4) : ?>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-<?= strtolower(str_replace(' ', '-', $category)) ?>" data-bs-slide="prev" style="display: none;">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#carousel-<?= strtolower(str_replace(' ', '-', $category)) ?>" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    <?php endif; ?>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <h1><span class="badge badge-custom"><?= htmlspecialchars($category) ?></span></h1>
+                </div>
+                <div class="table-responsive mt-4">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Generic Name</th>
+                                <th scope="col">Brand Name</th>
+                                <th scope="col">Milligram</th>
+                                <th scope="col">Dosage Form</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Price</th>
+                                <th scope="col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($items as $item) : ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($item['genericName']) ?></td>
+                                    <td><?= htmlspecialchars($item['brandName']) ?></td>
+                                    <td><?= htmlspecialchars($item['milligram']) ?>ml</td>
+                                    <td><?= htmlspecialchars($item['dosageForm']) ?></td>
+                                    <td><?= $item['quantity'] ?></td>
+                                    <td>₱<?= number_format($item['price'], 2) ?></td>
+                                    <td>
+                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-pencil-square"></i></button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     <?php endforeach; ?>
 </section>
 
+<!-- Add Inventory Modal -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1" aria-labelledby="addInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addInventoryModalLabel">Add Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addInventoryForm">
+                    <div class="mb-3">
+                        <label for="genericName" class="form-label">Generic Name</label>
+                        <input type="text" class="form-control" id="genericName" name="genericName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="brandName" class="form-label">Brand Name</label>
+                        <input type="text" class="form-control" id="brandName" name="brandName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="milligram" class="form-label">Milligram</label>
+                        <input type="text" class="form-control" id="milligram" name="milligram" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dosageForm" class="form-label">Dosage</label>
+                        <input type="text" class="form-control" id="dosageForm" name="dosageForm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="group" class="form-label">Group</label>
+                        <input type="text" class="form-control" id="group" name="group" required>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Inventory Modal -->
+<div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editInventoryModalLabel">Edit Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editInventoryForm">
+                    <input type="hidden" id="editInventoryId" name="inventoryId">
+                    <div class="mb-3">
+                        <label for="editGenericName" class="form-label">Generic Name</label>
+                        <input type="text" class="form-control" id="editGenericName" name="genericName" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBrandName" class="form-label">Brand Name</label>
+                        <input type="text" class="form-control" id="editBrandName" name="brandName" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editMilligram" class="form-label">Milligram</label>
+                        <input type="text" class="form-control" id="editMilligram" name="milligram" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDosageForm" class="form-label">Dosage</label>
+                        <input type="text" class="form-control" id="editDosageForm" name="dosageForm" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQuantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="editQuantity" name="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPrice" class="form-label">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="editPrice" name="price" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGroup" class="form-label">Group</label>
+                        <input type="text" class="form-control" id="editGroup" name="group" disabled>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Inventory Modal -->
+<div class="modal fade" id="deleteInventoryModal" tabindex="-1" aria-labelledby="deleteInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteInventoryModalLabel">Delete Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item?</p>
+                <form id="deleteInventoryForm">
+                    <input type="hidden" id="deleteInventoryId" name="inventoryId">
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('add_inventory.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error adding item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding item: ' + error.message);
+        });
+    });
+
+    document.getElementById('editInventoryForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append('inventoryId', document.getElementById('editInventoryId').value);
+        formData.append('quantity', document.getElementById('editQuantity').value);
+
+        fetch('edit_inventory.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error editing item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error editing item: ' + error.message);
+        });
+    });
+
+    document.getElementById('deleteInventoryForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('delete_inventory.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting item: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting item: ' + error.message);
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const editInventoryModal = document.getElementById('editInventoryModal');
+        const deleteInventoryModal = document.getElementById('deleteInventoryModal');
+
+        editInventoryModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const inventoryId = button.getAttribute('data-id');
+
+            fetch('get_inventory.php?id=' + inventoryId)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('editInventoryId').value = data.inventoryId;
+                    document.getElementById('editGenericName').value = data.genericName;
+                    document.getElementById('editBrandName').value = data.brandName;
+                    document.getElementById('editMilligram').value = data.milligram;
+                    document.getElementById('editDosageForm').value = data.dosageForm;
+                    document.getElementById('editQuantity').value = data.quantity;
+                    document.getElementById('editPrice').value = data.price;
+                    document.getElementById('editGroup').value = data.group;
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        deleteInventoryModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const inventoryId = button.getAttribute('data-id');
+            document.getElementById('deleteInventoryId').value = inventoryId;
+        });
+    });
+</script>
+
 <?php include("./includes/footer.php"); ?>
 
 <style>
     /* Inventory */
-    /* Carousel */
-    .carousel-control-prev-icon,
-    .carousel-control-next-icon {
-        background-color: rgba(0, 0, 0, 0.5);
-        border-radius: 50%;
-        padding: 10px;
-        width: 30px;
-        height: 30px;
-        transition: all 0.3s ease;
-    }
-
-    .carousel-control-prev,
-    .carousel-control-next {
-        width: 5%;
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-
-    .carousel-control-prev {
-        left: -4%;
-    }
-
-    .carousel-control-next {
-        right: -4%;
-    }
-
-    .carousel-control-prev-icon:hover,
-    .carousel-control-next-icon:hover {
-        background-color: rgba(0, 0, 0, 0.8);
-        padding: 15px;
-        width: 40px;
-        height: 40px;
-    }
-
     /* Badge */
     .badge-custom {
         background-color: #6ccf54;
@@ -129,48 +311,41 @@ while ($row = mysqli_fetch_assoc($result)) {
         border-color: #c04a67;
     }
 
-    /* Image Container */
-    .image-container {
-        width: 100%;
-        height: 200px; /* Set a fixed height for the image container */
-        overflow: hidden;
+    /* Modal Form */
+    .modal-body {
+        max-height: 400px;
+        overflow-y: auto;
     }
 
-    .image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Ensures the image covers the container while maintaining aspect ratio */
+    .modal-header {
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: bold;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    .btn-primary {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .btn-primary:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
     }
 </style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const carousels = document.querySelectorAll('.carousel');
-
-        carousels.forEach(carousel => {
-            const prevButton = carousel.querySelector('.carousel-control-prev');
-            const nextButton = carousel.querySelector('.carousel-control-next');
-            const items = carousel.querySelectorAll('.carousel-item');
-
-            if (items.length <= 1) {
-                nextButton.style.display = 'none';
-            }
-
-            carousel.addEventListener('slide.bs.carousel', function (event) {
-                const activeIndex = Array.from(items).indexOf(carousel.querySelector('.carousel-item.active'));
-                const nextIndex = event.to;
-
-                if (nextIndex === 0) {
-                    prevButton.style.display = 'none';
-                    nextButton.style.display = 'block';
-                } else if (nextIndex === items.length - 1) {
-                    nextButton.style.display = 'none';
-                    prevButton.style.display = 'block';
-                } else {
-                    prevButton.style.display = 'block';
-                    nextButton.style.display = 'block';
-                }
-            });
-        });
-    });
-</script>

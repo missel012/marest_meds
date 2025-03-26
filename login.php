@@ -36,8 +36,62 @@
   * Author: BootstrapMade.com
   * License: https://bootstrapmade.com/license/
   ======================================================== -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hammersmith+One&family=Open+Sans:wght@400;500&display=swap');
+    body {
+      background: url('assets/img/bg.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      overflow: hidden; /* Add this line to remove scrollbar */
+    }
+
+    main {
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .card {
+      background: url('assets/img/bgcard.png') no-repeat center center;
+      background-size: cover;
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); /* Add shadow */
+    }
+
+    .form-control, .btn {
+      border-radius: 20px; /* Make input fields and buttons more rounded */
+    }
+
+    .form-check-input {
+      border-radius: 50%; /* Make checkbox more rounded */
+    }
+
+    .card-title {
+      font-family: 'Hammersmith One', sans-serif;
+      color: #DB5C79;
+    }
+
+    .btn-primary {
+      background-color: #DB5C79;
+      color: white;
+      border: none;
+      font-family: 'Hammersmith One', sans-serif;
+    }
+
+    .btn-primary:hover {
+      background-color: #C04A68;
+    }
+
+    .form-label {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400; /* Medium weight */
+    }
+
+    .text-center.small {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 400; /* Medium weight */
+    }
+  </style>
 </head>
-<?php session_start();?>
+<?php session_start(); ?>
+
 <body>
 
   <main>
@@ -58,12 +112,12 @@
                     <p class="text-center small">Enter your username & password to login</p>
                   </div>
 
-                  <form class="row g-3 needs-validation"  action="./controller/login.php" method="POST"  novalidate>
+                  <form class="row g-3 needs-validation" action="./controller/login.php" method="POST" novalidate>
 
                     <div class="col-12">
                       <label for="yourUsername" class="form-label">Email Address</Address></label>
                       <div class="input-group has-validation">
-                     
+
                         <input type="text" name="email" class="form-control" id="yourUsername" required>
                         <div class="invalid-feedback">Please enter your email address.</div>
                       </div>
@@ -82,17 +136,17 @@
                       </div>
                     </div>
                     <div class="col-12">
-                      <button class="btn btn-primary w-100" type="submit" name = "login" >Login</button>
+                      <button class="btn btn-primary w-100" type="submit" name="login">Login</button>
                     </div>
                     <div class="col-12">
-                      <p class="small mb-0">Don't have account? <a href="./registration.php">Create an account</a></p>
+                      <p class="small mb-0">Don't have account? <a href="./registration.php" style="color: #DB5C79;">Create an account</a></p>
                     </div>
                   </form>
 
                 </div>
               </div>
 
-             
+
             </div>
           </div>
         </div>
@@ -115,30 +169,30 @@
   <script src="assets/vendor/php-email-form/validate.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <?php
-  if(isset($_SESSION['message']) && $_SESSION['code'] !='') {
-      ?>
-      <script>
-        const Toast = Swal.mixin({
-          toast: true,
-          position: "top-end",
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-          didOpen: (toast) => {
-            toast.onmouseenter = Swal.stopTimer;
-            toast.onmouseleave = Swal.resumeTimer;
-          }
-        });
-        Toast.fire({
-          icon: "<?php echo $_SESSION['code']; ?>",
-          title: "<?php echo $_SESSION['message']; ?>"
-        });
-      </script>
-      <?php
-      unset($_SESSION['message']);
-      unset($_SESSION['code']);
-  }     
-?>
+  if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
+  ?>
+    <script>
+      const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.onmouseenter = Swal.stopTimer;
+          toast.onmouseleave = Swal.resumeTimer;
+        }
+      });
+      Toast.fire({
+        icon: "<?php echo $_SESSION['code']; ?>",
+        title: "<?php echo $_SESSION['message']; ?>"
+      });
+    </script>
+  <?php
+    unset($_SESSION['message']);
+    unset($_SESSION['code']);
+  }
+  ?>
   <!-- Template Main JS File -->
   <script src="assets/js/main.js"></script>
 
