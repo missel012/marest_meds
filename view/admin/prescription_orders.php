@@ -4,22 +4,75 @@ include("./includes/topbar.php");
 include("./includes/sidebar.php");
 include("../../dB/config.php"); // Ensure this file contains your database connection
 
-// Fetch orders data for the graph
-$query = "SELECT DATE(datetime) as orderDate, SUM(total) as totalRevenue FROM `order` GROUP BY orderDate ORDER BY orderDate DESC LIMIT 10";
-$result = mysqli_query($conn, $query);
+// Get search input
+$searchTerm = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : '%';
+
+// Update query to filter by search term
+$query = "
+    SELECT 
+        o.orderId, 
+        o.datetime, 
+        oi.orderItemId, 
+        oi.inventoryId, 
+        oi.genericName, 
+        oi.brandName, 
+        oi.milligram, 
+        oi.dosageForm, 
+        oi.quantity, 
+        oi.price, 
+        oi.group, 
+        oi.total
+    FROM 
+        `order` o
+    INNER JOIN 
+        order_items oi 
+    ON 
+        o.orderId = oi.orderId
+    WHERE 
+        oi.genericName LIKE ? 
+        OR oi.brandName LIKE ? 
+        OR oi.group LIKE ?
+    ORDER BY 
+        o.datetime DESC, oi.orderItemId ASC
+";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("sss", $searchTerm, $searchTerm, $searchTerm);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $orders = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $orders[] = $row;
+while ($row = $result->fetch_assoc()) {
+    $orders[$row['orderId']]['datetime'] = $row['datetime'];
+    $orders[$row['orderId']]['items'][] = $row;
 }
 
-// Fetch all orders for the table
-$query_all_orders = "SELECT * FROM `order` ORDER BY datetime DESC";
-$result_all_orders = mysqli_query($conn, $query_all_orders);
+// Fetch orders and calculate total revenue for each order
+$query = "
+    SELECT 
+        o.orderId, 
+        o.datetime, 
+        SUM(oi.total) AS totalRevenue
+    FROM 
+        `order` o
+    INNER JOIN 
+        order_items oi 
+    ON 
+        o.orderId = oi.orderId
+    GROUP BY 
+        o.orderId, o.datetime
+    ORDER BY 
+        o.datetime ASC
+";
+$stmt = $conn->prepare($query);
+$stmt->execute();
+$result = $stmt->get_result();
 
-$all_orders = [];
-while ($row = mysqli_fetch_assoc($result_all_orders)) {
-    $all_orders[] = $row;
+$graphData = [];
+while ($row = $result->fetch_assoc()) {
+    $graphData[] = [
+        'datetime' => $row['datetime'],
+        'totalRevenue' => $row['totalRevenue']
+    ];
 }
 ?>
 
@@ -33,31 +86,18 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
   </nav>
 </div><!-- End Page Title -->
 
-<div class="row g-3">
-  <div class="col-md-4">
-    <div class="form-floating">
-      <input type="date" class="form-control" id="dateRange" placeholder="Date Range">
-      <label for="dateRange">Date Range</label>
+<div class="row g-3 align-items-end">
+  <form method="GET" action="prescription_orders.php" class="col-md-8">
+    <div class="input-group">
+      <input type="text" class="form-control" id="search" name="search" placeholder="Search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
+      <button type="submit" class="btn btn-primary" style="background: #DB5C79; border: none">
+        <i class="bi bi-search"></i> <!-- Icon inside the search bar -->
+      </button>
     </div>
   </form>
 
   <div class="col-md-4">
-    <div class="form-floating">
-      <select class="form-select" id="medicineGroup" aria-label="Select Medicine Group">
-        <option selected>Select Group</option>
-        <option value="analgesic">Analgesic</option>
-        <option value="antibiotic">Antibiotic</option>
-        <option value="antidiabetic">Antidiabetic</option>
-        <option value="antihistamine">Antihistamine</option>
-        <option value="antihypertensive">Antihypertensive</option>
-        <option value="NSAID">NSAID</option>
-      </select>
-      <label for="medicineGroup">Medicine Group</label>
-    </div>
-  </div>
-
-  <div class="col-md-4 d-flex align-items-end">
-    <button class="btn btn-primary w-100" id="modifyOrder">Modify Orders</button>
+    <button class="btn btn-primary w-100" style="background: #DB5C79; border: none" data-bs-toggle="modal" data-bs-target="#addOrderModal">Add Order Transaction</button>
   </div>
 </div>
 
@@ -73,14 +113,12 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
 
         <script>
           document.addEventListener("DOMContentLoaded", () => {
-            const ordersData = <?= json_encode($orders) ?>;
-            const labels = ordersData.map(order => order.orderDate);
-            const data = ordersData.map(order => order.totalRevenue);
+            const graphData = <?= json_encode($graphData) ?>;
+            const labels = graphData.map(data => data.datetime);
+            const data = graphData.map(data => data.totalRevenue);
 
             new ApexCharts(document.querySelector("#areaChart"), {
               series: [{
-                name: "Total Revenue",
-                data: data
                 name: "Total Revenue",
                 data: data
               }],
@@ -99,11 +137,8 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
               },
               subtitle: {
                 text: 'Revenue Movements',
-                text: 'Revenue Movements',
                 align: 'left'
               },
-              colors: ['#DB5C79'], // Changed color here
-              labels: labels,
               colors: ['#DB5C79'], // Changed color here
               labels: labels,
               xaxis: {
@@ -127,23 +162,50 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
   <div class="col-lg-6">
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">Orders</h5>
-        <p>Total Orders: <?= count($all_orders) ?></p>
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="card-title">Orders</h5>
+          <button id="expandTableButton" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#expandedOrdersModal">
+            <i class="bi bi-arrows-fullscreen"></i> Expand
+          </button>
+        </div>
+        <p>Total Orders: <?= count($orders) ?></p>
 
         <!-- Order Table -->
-        <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+        <div id="ordersTableContainer" class="table-responsive" style="max-height: 350px; overflow-y: auto;">
           <table class="table table-borderless">
             <thead>
               <tr>
                 <th scope="col">Order ID</th>
+                <th scope="col">Generic Name</th>
+                <th scope="col">Brand Name</th>
+                <th scope="col">Milligram</th>
+                <th scope="col">Dosage Form</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Group</th>
+                <th scope="col">Total</th>
                 <th scope="col">Date and Time</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($all_orders as $order) : ?>
+              <?php foreach ($orders as $orderId => $order) : ?>
                 <tr>
-                  <td>ORDER-00<?= htmlspecialchars($order['orderId']) ?></td>
+                  <td>ORDER-00<?= htmlspecialchars($orderId) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['genericName']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['brandName']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['milligram']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['dosageForm']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['quantity']) ?></td>
+                  <td>₱<?= number_format($order['items'][0]['price'], 2) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['group']) ?></td>
+                  <td>₱<?= number_format($order['items'][0]['total'], 2) ?></td>
                   <td><?= htmlspecialchars($order['datetime']) ?></td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteOrderModal" data-id="<?= $orderId ?>">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
