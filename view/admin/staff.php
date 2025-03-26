@@ -340,4 +340,63 @@ document.addEventListener("DOMContentLoaded", function() {
   .table-striped tbody tr:nth-of-type(even) {
     background-color: #A3E4A7;
   }
+    /* Badge */
+    .badge-custom {
+        background-color: #6ccf54;
+    }
+
+    /* Button */
+    .btn-custom {
+        background-color: #db5c79;
+        border-color: #db5c79;
+        color: #fff;
+    }
+
+    .btn-custom:hover {
+        background-color: #c04a67;
+        border-color: #c04a67;
+    }
+
+    /* Modal Form */
+    .modal-body {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        border-bottom: none;
+    }
+
+    .modal-title {
+        font-weight: bold;
+    }
+
+    .form-label {
+        font-weight: bold;
+    }
+
+    .btn-primary {
+        background-color: #6ccf54 !important; /* Save button color */
+        border-color: #6ccf54 !important;
+    }
+
+    .btn-primary:hover {
+        background-color: #5ab94a !important;
+        border-color: #5ab94a !important;
+    }
+
+    .btn-secondary {
+        background-color: #db5c79 !important; /* Close button color */
+        border-color: #db5c79 !important;
+    }
+
+    .btn-secondary:hover {
+        background-color: #c04a67 !important;
+        border-color: #c04a67 !important;
+    }
+
+    /* Make modal wider */
+    .modal-dialog {
+        max-width: 800px !important; /* Adjust width as needed */
+    }
 </style>
