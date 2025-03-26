@@ -70,7 +70,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 <div class="row">
   <!-- Info Cards -->
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #52e42e;">
+    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
           <i class="bi bi-exclamation-triangle"></i>
@@ -83,27 +83,27 @@ while ($row = mysqli_fetch_assoc($result)) {
   </div>
 
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card inventory-card">
+  <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
           <i class="bi bi-capsule"></i>
         </div>
         <h6 class="mt-3">Medicines Available</h6>
         <h2><?php echo $total_medicines; ?></h2>
-        <a href="inventory.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">Visit Inventory <i class="bi bi-chevron-right"></i></a>
+        <a href="inventory.php" class="btn btn-custom mt-3" style="background-color: #6CCF54;">Visit Inventory <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
   </div>
 
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card total-orders-card">
+  <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
           <i class="bi bi-cart"></i>
         </div>
         <h6 class="mt-3">Total Orders Made</h6>
         <h2><?php echo $total_orders; ?></h2>
-        <a href="prescriptionOrders.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Orders <i class="bi bi-chevron-right"></i></a>
+        <a href="prescriptionOrders.php" class="btn btn-custom mt-3" style="background-color: #6CCF54;">View Orders <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
   </div>
@@ -305,7 +305,7 @@ include("./includes/footer.php");
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: #52e42e;
+  background: #6CCF54;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;

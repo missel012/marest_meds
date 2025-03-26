@@ -306,15 +306,30 @@ include("./includes/footer.php");
     }
 
     /* Center logo horizontally */
-    .logo {
-        margin: 0 auto;
-        display: flex;
-        justify-content: center;
-        margin-top: 15px;
-        /* Add top margin to match the space below the Pay Now button */
+    .logo_bw {
+        line-height: 1;
+    }
+
+    @media (min-width: 1200px) {
+        .logo_bw {
+            width: 280px;
+        }
+    }
+
+    .logo_bw img {
+        max-height: 26px;
+        margin-right: 6px;
+    }
+
+    .logo_bw span {
+        font-size: 26px;
+        font-weight: 700;
+        color: #012970;
+        font-family: "Nunito", sans-serif;
     }
 </style>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     let cart = {};
     let nextOrderId = <?php echo $nextOrderId; ?>;
@@ -429,7 +444,7 @@ include("./includes/footer.php");
 
         let receiptContent = `
         <div class="d-flex align-items-center justify-content-center">
-            <a class="logo d-flex align-items-center" style="margin-top: 30px;">
+            <a class="logo_bw d-flex align-items-center" style="margin-top: 30px; justify-content: center;">
                 <img src="../../assets/img/marest_logo_bw.png" alt="Logo">
                 <span class="d-none d-lg-block">
                     <span style="color:  black ; font-weight: bold;">Marest</span>
@@ -486,12 +501,25 @@ include("./includes/footer.php");
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('Order placed successfully');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Order Successful',
+                        text: 'Your order has been placed successfully!',
+                    });
                 } else {
-                    console.error('Error placing order:', data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Order Unsuccessful',
+                        text: 'There was an error placing your order. Please try again.',
+                    });
                 }
             })
             .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Order Unsuccessful',
+                    text: 'There was an error placing your order. Please try again.',
+                });
                 console.error('Error:', error);
             });
 
