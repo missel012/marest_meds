@@ -105,6 +105,42 @@ $orderQuery = "SELECT MAX(orderId) as lastOrderId FROM `order`";
 $orderResult = mysqli_query($conn, $orderQuery);
 $orderRow = mysqli_fetch_assoc($orderResult);
 $nextOrderId = $orderRow['lastOrderId'] + 1;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'deleteOrder') {
+    header('Content-Type: application/json');
+    $orderId = isset($_POST['orderId']) ? intval($_POST['orderId']) : 0;
+
+    if ($orderId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
+        exit;
+    }
+
+    $conn->begin_transaction();
+
+    try {
+        // Delete from order_items table
+        $deleteItemsQuery = "DELETE FROM order_items WHERE orderId = ?";
+        $stmt = $conn->prepare($deleteItemsQuery);
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $stmt->close();
+
+        // Delete from order table
+        $deleteOrderQuery = "DELETE FROM `order` WHERE orderId = ?";
+        $stmt = $conn->prepare($deleteOrderQuery);
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $stmt->close();
+
+        $conn->commit();
+
+        echo json_encode(['success' => true, 'message' => 'Order deleted successfully.']);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => 'Failed to delete order: ' . $e->getMessage()]);
+    }
+    exit;
+}
 ?>
 <script>
   const graphData = <?php echo json_encode($graphData); ?>;
@@ -983,23 +1019,43 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
   document.getElementById('deleteOrderForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const formData = new FormData(this);
+    formData.append('action', 'deleteOrder'); // Add action parameter
 
-    fetch('delete_order.php', {
+    fetch('prescription_orders.php', { // Send request to the same file
         method: 'POST',
         body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          location.reload();
-        } else {
-          alert('Error deleting order: ' + (data.message || 'Unknown error'));
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-      })
-      .catch(error => {
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Order Deleted',
+                text: 'The order has been deleted successfully!',
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Delete Failed',
+                text: data.message || 'An unknown error occurred while deleting the order.',
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: error.message || 'An error occurred while deleting the order.',
+        });
         console.error('Error:', error);
-        alert('Error deleting order: ' + error.message);
-      });
+    });
   });
 
   document.addEventListener('DOMContentLoaded', function() {

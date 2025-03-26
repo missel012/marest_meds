@@ -56,7 +56,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                                 <tr>
                                     <td><?= htmlspecialchars($item['genericName']) ?></td>
                                     <td><?= htmlspecialchars($item['brandName']) ?></td>
-                                    <td><?= htmlspecialchars($item['milligram']) ?>ml</td>
+                                    <td><?= htmlspecialchars($item['milligram']) ?>mg</td>
                                     <td><?= htmlspecialchars($item['dosageForm']) ?></td>
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
@@ -94,7 +94,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="mb-3">
                         <label for="milligram" class="form-label">Milligram</label>
-                        <input type="text" class="form-control" id="milligram" name="milligram" required>
+                        <input type="number" class="form-control" id="milligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
                         <label for="dosageForm" class="form-label">Dosage</label>
@@ -152,7 +152,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="mb-3">
                         <label for="editMilligram" class="form-label">Milligram</label>
-                        <input type="text" class="form-control" id="editMilligram" name="milligram" required>
+                        <input type="number" class="form-control" id="editMilligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
                         <label for="editDosageForm" class="form-label">Dosage</label>
@@ -397,22 +397,27 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     .btn-primary {
-        background-color: #28a745;
-        border-color: #28a745;
+        background-color: #6ccf54 !important; /* Save button color */
+        border-color: #6ccf54 !important;
     }
 
     .btn-primary:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
+        background-color: #5ab94a !important;
+        border-color: #5ab94a !important;
     }
 
     .btn-secondary {
-        background-color: #6c757d;
-        border-color: #6c757d;
+        background-color: #db5c79 !important; /* Close button color */
+        border-color: #db5c79 !important;
     }
 
     .btn-secondary:hover {
-        background-color: #5a6268;
-        border-color: #545b62;
+        background-color: #c04a67 !important;
+        border-color: #c04a67 !important;
+    }
+
+    /* Make modal wider */
+    .modal-dialog {
+        max-width: 800px !important; /* Adjust width as needed */
     }
 </style>

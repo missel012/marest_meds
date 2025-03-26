@@ -54,7 +54,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                                 <tr>
                                     <td><?= htmlspecialchars($item['genericName']) ?></td>
                                     <td><?= htmlspecialchars($item['brandName']) ?></td>
-                                    <td><?= htmlspecialchars($item['milligram']) ?>ml</td>
+                                    <td><?= htmlspecialchars($item['milligram']) ?>mg</td>
                                     <td><?= htmlspecialchars($item['dosageForm']) ?></td>
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
