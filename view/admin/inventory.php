@@ -16,6 +16,24 @@ while ($row = mysqli_fetch_assoc($result)) {
     $group = ucfirst($row['group']);
     $inventory[$group][] = $row;
 }
+
+// Example: Display SweetAlert for success or error messages
+if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
+    echo "<script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: '" . $_SESSION['code'] . "',
+                title: '" . $_SESSION['message'] . "',
+                confirmButtonColor: '#DB5C79'
+            });
+        });
+    </script>";
+    unset($_SESSION['message'], $_SESSION['code']);
+}
+?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php
+// ...existing code...
 ?>
 
 <div class="pagetitle">
@@ -249,15 +267,23 @@ while ($row = mysqli_fetch_assoc($result)) {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error editing item: ' + (data.message || 'Unknown error'));
-            }
+            Swal.fire({
+                icon: data.success ? 'success' : 'error',
+                title: data.message,
+                confirmButtonColor: '#DB5C79'
+            }).then(() => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Error editing item: ' + error.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error editing item',
+                text: error.message,
+                confirmButtonColor: '#DB5C79'
+            });
         });
     });
 

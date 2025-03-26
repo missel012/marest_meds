@@ -60,9 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
 if (isset($_GET['delete_id'])) {
   $delete_id = $_GET['delete_id'];
   $delete_query = "DELETE FROM staff WHERE staff_id = '$delete_id'";
-  mysqli_query($conn, $delete_query);
-  $_SESSION['message'] = "Staff deleted successfully.";
-  $_SESSION['code'] = "success";
+  if (mysqli_query($conn, $delete_query)) {
+    $_SESSION['message'] = "Staff deleted successfully.";
+    $_SESSION['code'] = "success";
+  } else {
+    $_SESSION['message'] = "Failed to delete staff.";
+    $_SESSION['code'] = "error";
+  }
   header("Location: staff.php");
   exit();
 }
@@ -85,14 +89,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignRole'])) {
     $stmtUser->bind_param("ss", $userRole, $email);
 
     if ($stmtUser->execute()) {
-      $_SESSION['message'] = "Role assigned successfully";
+      $_SESSION['message'] = "Role assigned successfully.";
       $_SESSION['code'] = "success";
     } else {
-      $_SESSION['message'] = "Failed to update role in users table";
+      $_SESSION['message'] = "Failed to update role in users table.";
       $_SESSION['code'] = "error";
     }
   } else {
-    $_SESSION['message'] = "Failed to assign role";
+    $_SESSION['message'] = "Failed to assign role.";
     $_SESSION['code'] = "error";
   }
 
@@ -278,6 +282,18 @@ ob_end_flush(); // Flush the output buffer
 
 <!-- Include SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php if (isset($_SESSION['message']) && $_SESSION['code'] != ''): ?>
+    <script>
+        Swal.fire({
+            icon: "<?php echo $_SESSION['code']; ?>",
+            title: "<?php echo $_SESSION['message']; ?>",
+            confirmButtonColor: "#DB5C79"
+        }).then(() => {
+            window.location = "staff.php";
+        });
+    </script>
+    <?php unset($_SESSION['message'], $_SESSION['code']); ?>
+<?php endif; ?>
 
 <script>
 function searchStaffFunction() {
@@ -313,21 +329,6 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 });
 </script>
-
-<?php
-if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
-  ?>
-  <script>
-    Swal.fire({
-      icon: "<?php echo $_SESSION['code']; ?>",
-      title: "<?php echo $_SESSION['message']; ?>"
-    });
-  </script>
-  <?php
-  unset($_SESSION['message']);
-  unset($_SESSION['code']);
-}
-?>
 
 <style>
   .highlight {
