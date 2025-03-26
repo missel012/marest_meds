@@ -2,61 +2,60 @@
 include("../dB/config.php");
 session_start();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if(isset($_POST['login'])) {
+
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    // Fetch user details from the database
-    $query = "SELECT userId, password, role FROM users WHERE email = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $query = "SELECT `userId`, `firstName`, `lastName`, `email`, `password`, `phoneNumber`, `gender`, `birthday`, `verification`, `role` 
+    FROM `users` WHERE email = '$email' AND password = '$password' LIMIT 1";
+    
 
-    if ($result->num_rows === 1) {
-        $user = $result->fetch_assoc();
+    $query_run = mysqli_query($conn, $query);
 
-        // Verify the password
-        if (password_verify($password, $user['password'])) {
-            // Set session variables
-            $_SESSION['userId'] = $user['userId'];
-            $_SESSION['role'] = $user['role'];
+    if ($query_run){
+        if(mysqli_num_rows($query_run) > 0){
+            $data = mysqli_fetch_Assoc($query_run);
 
-            // Redirect based on role
-            if ($user['role'] === 'admin') {
-                header("Location: ../view/admin/index.php");
+            $userId = $data['userId'];
+            $fullName = $data['firstName'] . ' ' . $data['lastName'];
+            $email = $data['email'];
+            $userRole = $data['role'];
+
+            $_SESSION['auth'] = true;
+            $_SESSION['role'] = $userRole;
+            $_SESSION['authUser'] = [
+                'userId' => $userId,
+                'fullName' => $fullName,
+                'email' => $email,
+            ];
+
+            if($userRole == 'admin'){
+                header("Location:../view/admin/index.php");
+            }   elseif ($userRole == 'user'){
+                header("Location:../view/users/index.php");
             } else {
-                header("Location: ../view/staff/index.php");
+                header("Location:../login.php");
             }
             exit();
-        } else {
-            $error = "Invalid email or password.";
+        }
+        else{
+            $_SESSION['message'] = "Invalid Credentials";
+            $_SESSION['code'] = "error";
+            header("Location:../login.php");
+            exit();
         }
     } else {
-        $error = "Invalid email or password.";
+        $_SESSION['message'] = "There is something wrong";
+        $_SESSION['code'] = "error";
+        header("Location:../login.php");
+        exit();
     }
+} else{
+    $_SESSION['message'] = "Invalid request";
+    $_SESSION['code'] = "error";
+    header("Location:../login.php");
+    exit();
 }
+
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-</head>
-<body>
-    <form method="POST" action="">
-        <h2>Login</h2>
-        <?php if (isset($error)): ?>
-            <p style="color: red;"><?= htmlspecialchars($error) ?></p>
-        <?php endif; ?>
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" required>
-        <br>
-        <label for="password">Password:</label>
-        <input type="password" name="password" id="password" required>
-        <br>
-        <button type="submit">Login</button>
-    </form>
-</body>
-</html>

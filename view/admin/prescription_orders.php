@@ -49,9 +49,8 @@ while ($row = $result->fetch_assoc()) {
 // Fetch orders and calculate total revenue for each order
 $query = "
     SELECT 
-        o.orderId, 
-        o.datetime, 
-        SUM(oi.total) AS totalRevenue
+        DATE(o.datetime) AS order_date, 
+        SUM(oi.total) AS total_revenue
     FROM 
         `order` o
     INNER JOIN 
@@ -59,22 +58,42 @@ $query = "
     ON 
         o.orderId = oi.orderId
     GROUP BY 
-        o.orderId, o.datetime
+        DATE(o.datetime)
     ORDER BY 
-        o.datetime ASC
+        DATE(o.datetime) ASC
 ";
-$stmt = $conn->prepare($query);
-$stmt->execute();
-$result = $stmt->get_result();
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die("Query failed: " . mysqli_error($conn));
+}
 
 $graphData = [];
-while ($row = $result->fetch_assoc()) {
+while ($row = mysqli_fetch_assoc($result)) {
     $graphData[] = [
-        'datetime' => $row['datetime'],
-        'totalRevenue' => $row['totalRevenue']
+        'order_date' => $row['order_date'],
+        'total_revenue' => $row['total_revenue']
     ];
 }
+
+// Fetch inventory items grouped by category
+$query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die("Query failed: " . mysqli_error($conn));
+}
+
+$inventory = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $inventory[$row['group']][] = $row;
+}
+
+// Pass graph data to JavaScript
 ?>
+<script>
+    const graphData = <?php echo json_encode($graphData); ?>;
+</script>
 
 <div class="pagetitle">
   <h1>Prescription Orders</h1>
@@ -104,18 +123,17 @@ while ($row = $result->fetch_assoc()) {
 <div class="row mt-4"> <!-- Added margin-top class here -->
 
   <div class="col-lg-6">
-    <div class="card">
+    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
       <div class="card-body">
-        <h5 class="card-title">Sales Made</h5>
+        <h5 class="card-title">Sales Performance</h5>
 
         <!-- Area Chart -->
         <div id="areaChart"></div>
 
         <script>
           document.addEventListener("DOMContentLoaded", () => {
-            const graphData = <?= json_encode($graphData) ?>;
-            const labels = graphData.map(data => data.datetime);
-            const data = graphData.map(data => data.totalRevenue);
+            const labels = graphData.map(data => data.order_date);
+            const data = graphData.map(data => data.total_revenue);
 
             new ApexCharts(document.querySelector("#areaChart"), {
               series: [{
@@ -133,15 +151,15 @@ while ($row = $result->fetch_assoc()) {
                 enabled: false
               },
               stroke: {
-                curve: 'straight'
+                curve: 'smooth'
               },
               subtitle: {
                 text: 'Revenue Movements',
                 align: 'left'
               },
               colors: ['#DB5C79'], // Changed color here
-              labels: labels,
               xaxis: {
+                categories: labels,
                 type: 'datetime',
               },
               yaxis: {
@@ -278,39 +296,203 @@ while ($row = $result->fetch_assoc()) {
 
 <!-- Add Order Modal -->
 <div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-xl">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="addOrderModalLabel">Add Order</h5>
+        <h5 class="modal-title" id="addOrderModalLabel">Add Order Transaction</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form id="addOrderForm">
-          <div class="mb-3">
-            <label for="genericName" class="form-label">Generic Name</label>
-            <input type="text" class="form-control" id="genericName" name="genericName" required>
+        <div class="row">
+          <!-- Left Section: Inventory Items -->
+          <div class="col-lg-8">
+            <div class="nav nav-pills mb-3" id="pills-tab" role="tablist" style="overflow-x: auto; white-space: nowrap;">
+              <button class="nav-link active" id="pills-all-tab" data-bs-toggle="pill" data-bs-target="#pills-all" type="button" role="tab" aria-controls="pills-all" aria-selected="true">All Items</button>
+              <?php foreach ($inventory as $category => $items) : ?>
+                <button class="nav-link" id="pills-<?= strtolower(str_replace(' ', '-', $category)) ?>-tab" data-bs-toggle="pill" data-bs-target="#pills-<?= strtolower(str_replace(' ', '-', $category)) ?>" type="button" role="tab" aria-controls="pills-<?= strtolower(str_replace(' ', '-', $category)) ?>" aria-selected="false"><?= htmlspecialchars($category) ?></button>
+              <?php endforeach; ?>
+            </div>
+            <div class="tab-content" id="pills-tabContent">
+              <div class="tab-pane fade show active" id="pills-all" role="tabpanel" aria-labelledby="pills-all-tab">
+                <div class="row">
+                  <?php foreach ($inventory as $category => $items) : ?>
+                    <?php foreach ($items as $item) : ?>
+                      <div class="col-lg-3">
+                        <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?= $item['genericName'] ?>', '<?= $item['brandName'] ?>', <?= $item['price'] ?>, '<?= $item['group'] ?>', <?= $item['inventoryId'] ?>)">
+                          <div class="card-body text-center">
+                            <h5 class="card-title"><?= $item['genericName'] . ' ' . $item['brandName'] ?></h5>
+                            <p class="card-text">₱<?= number_format($item['price'], 2) ?></p>
+                            <p class="card-text">Stock: <span id="stock-<?= $item['inventoryId'] ?>"><?= $item['quantity'] ?></span></p>
+                          </div>
+                        </button>
+                      </div>
+                    <?php endforeach; ?>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+              <?php foreach ($inventory as $category => $items) : ?>
+                <div class="tab-pane fade" id="pills-<?= strtolower(str_replace(' ', '-', $category)) ?>" role="tabpanel" aria-labelledby="pills-<?= strtolower(str_replace(' ', '-', $category)) ?>-tab">
+                  <div class="row">
+                    <?php foreach ($items as $item) : ?>
+                      <div class="col-lg-3">
+                        <button type="button" class="btn custom-card mt-2 mb-2" onclick="addToCart('<?= $item['genericName'] ?>', '<?= $item['brandName'] ?>', <?= $item['price'] ?>, '<?= $item['group'] ?>', <?= $item['inventoryId'] ?>)">
+                          <div class="card-body text-center">
+                            <h5 class="card-title"><?= $item['genericName'] . ' ' . $item['brandName'] ?></h5>
+                            <p class="card-text">₱<?= number_format($item['price'], 2) ?></p>
+                            <p class="card-text">Stock: <span id="stock-<?= $item['inventoryId'] ?>"><?= $item['quantity'] ?></span></p>
+                          </div>
+                        </button>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="brandName" class="form-label">Brand Name</label>
-            <input type="text" class="form-control" id="brandName" name="brandName" required>
+
+          <!-- Right Section: Cart -->
+          <div class="col-lg-4">
+            <h5>Order Summary</h5>
+            <div id="cart-items"></div>
+            <div id="cart-summary" style="display: none;">
+              <h6>Total: <span id="total-amount">₱0.00</span></h6>
+              <button type="button" class="btn btn-primary" onclick="showReceipt()">Print Receipt</button>
+              <button type="button" class="btn btn-danger" onclick="clearCart()">Clear Cart</button>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="quantity" class="form-label">Quantity</label>
-            <input type="number" class="form-control" id="quantity" name="quantity" required>
-          </div>
-          <div class="mb-3">
-            <label for="total" class="form-label">Total</label>
-            <input type="number" step="0.01" class="form-control" id="total" name="total" required>
-          </div>
-          <div class="d-flex justify-content-between">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add Order</button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  /* Custom card styles */
+  .custom-card {
+    border: 1px solid #DB5C79; /* Border color for items */
+    background-color: white;
+    transition: all 0.3s ease;
+    text-align: left;
+    padding: 0;
+    width: 100%;
+    height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .custom-card:hover {
+    border-color: #FFDEE6;
+    background-color: #FFDEE6;
+  }
+
+  /* Custom tab styles */
+  .nav-pills .nav-link.active {
+    background-color: #6CCF54; /* Color for active tab */
+  }
+
+  .nav-pills .nav-link {
+    color: black;
+  }
+
+  /* Print button styles */
+  #print-receipt-btn {
+    background-color: #6CCF54; /* Color for print button */
+    border-color: #6CCF54;
+    color: white;
+    border-radius: 0.25rem;
+    width: 140px;
+    height: 40px;
+  }
+
+  #print-receipt-btn:hover {
+    background-color: #5bbd4a;
+    border-color: #5bbd4a;
+    color: white;
+  }
+
+  /* Remove button styles */
+  .remove-btn {
+    background-color: transparent;
+    border: none;
+    color: #DB5C79; /* Color for delete icon */
+    cursor: pointer;
+    font-size: 1.2rem;
+  }
+
+  .remove-btn:hover {
+    color: #C53D3D; /* Hover color for delete icon */
+  }
+</style>
+
+<script>
+  let cart = {};
+
+  function addToCart(genericName, brandName, price, group, inventoryId) {
+    const itemName = `${genericName} ${brandName}`;
+    const stockElement = document.getElementById(`stock-${inventoryId}`);
+    const stock = parseInt(stockElement.innerText);
+
+    if (!cart[itemName]) {
+      cart[itemName] = { quantity: 0, price, inventoryId, group, stock };
+    }
+
+    if (cart[itemName].quantity < stock) {
+      cart[itemName].quantity++;
+      stockElement.innerText = stock - 1;
+      updateCart();
+    }
+  }
+
+  function updateCart() {
+    const cartItems = document.getElementById('cart-items');
+    const cartSummary = document.getElementById('cart-summary');
+    const totalAmount = document.getElementById('total-amount');
+    let total = 0;
+
+    cartItems.innerHTML = '';
+    for (const itemName in cart) {
+      const item = cart[itemName];
+      const itemTotal = item.quantity * item.price;
+      total += itemTotal;
+
+      cartItems.innerHTML += `
+        <div class="cart-item">
+          <span>${itemName} - ₱${itemTotal.toFixed(2)} (${item.quantity})</span>
+          <button class="remove-btn" onclick="removeFromCart('${itemName}')">
+            <i class="bi bi-trash-fill"></i>
+          </button>
+        </div>
+      `;
+    }
+
+    totalAmount.innerText = `₱${total.toFixed(2)}`;
+    cartSummary.style.display = total > 0 ? 'block' : 'none';
+  }
+
+  function removeFromCart(itemName) {
+    const item = cart[itemName];
+    const stockElement = document.getElementById(`stock-${item.inventoryId}`);
+    stockElement.innerText = parseInt(stockElement.innerText) + item.quantity;
+    delete cart[itemName];
+    updateCart();
+  }
+
+  function clearCart() {
+    for (const itemName in cart) {
+      const item = cart[itemName];
+      const stockElement = document.getElementById(`stock-${item.inventoryId}`);
+      stockElement.innerText = parseInt(stockElement.innerText) + item.quantity;
+    }
+    cart = {};
+    updateCart();
+  }
+
+  function showReceipt() {
+    console.log('Receipt:', cart);
+    clearCart();
+  }
+</script>
 
 <!-- Delete Order Modal -->
 <div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-labelledby="deleteOrderModalLabel" aria-hidden="true">
@@ -335,28 +517,6 @@ while ($row = $result->fetch_assoc()) {
 </div>
 
 <script>
-  document.getElementById('addOrderForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const formData = new FormData(this);
-
-    fetch('add_order.php', {
-      method: 'POST',
-      body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        location.reload();
-      } else {
-        alert('Error adding order: ' + (data.message || 'Unknown error'));
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error adding order: ' + error.message);
-    });
-  });
-
   document.getElementById('deleteOrderForm').addEventListener('submit', function (event) {
     event.preventDefault();
     const formData = new FormData(this);
