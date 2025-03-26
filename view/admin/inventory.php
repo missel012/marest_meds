@@ -202,6 +202,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.getElementById('group').addEventListener('change', function () {
         const otherGroupInput = document.getElementById('otherGroup');
@@ -228,14 +229,28 @@ while ($row = mysqli_fetch_assoc($result)) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Add Successful',
+                    text: 'The inventory item has been added successfully!',
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                alert('Error adding item: ' + (data.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Add Unsuccessful',
+                    text: 'There was an error adding the inventory item. Please try again.',
+                });
             }
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Add Unsuccessful',
+                text: 'There was an error adding the inventory item. Please try again.',
+            });
             console.error('Error:', error);
-            alert('Error adding item: ' + error.message);
         });
     });
 
@@ -250,14 +265,28 @@ while ($row = mysqli_fetch_assoc($result)) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Edit Successful',
+                    text: 'The inventory item has been updated successfully!',
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                alert('Error editing item: ' + (data.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Edit Unsuccessful',
+                    text: 'There was an error updating the inventory item. Please try again.',
+                });
             }
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Edit Unsuccessful',
+                text: 'There was an error updating the inventory item. Please try again.',
+            });
             console.error('Error:', error);
-            alert('Error editing item: ' + error.message);
         });
     });
 
@@ -272,14 +301,28 @@ while ($row = mysqli_fetch_assoc($result)) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Delete Successful',
+                    text: 'The inventory item has been deleted successfully!',
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                alert('Error deleting item: ' + (data.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Delete Unsuccessful',
+                    text: 'There was an error deleting the inventory item. Please try again.',
+                });
             }
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Delete Unsuccessful',
+                text: 'There was an error deleting the inventory item. Please try again.',
+            });
             console.error('Error:', error);
-            alert('Error deleting item: ' + error.message);
         });
     });
 
