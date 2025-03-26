@@ -38,7 +38,7 @@
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'profile.php') ? 'active' : 'collapsed'; ?>" href="profile.php ">
+        <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'users-profile.php') ? 'active' : 'collapsed'; ?>" href="users-profile.php ">
           <i class="bi bi-person"></i>
           <span>Profile</span>
         </a>
