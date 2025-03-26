@@ -38,25 +38,11 @@
       <li class="nav-heading">Pages</li>
 
       <li class="nav-item">
-        <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'profile.php') ? 'active' : 'collapsed'; ?>" href="profile.php ">
+        <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'users-profile.php') ? 'active' : 'collapsed'; ?>" href="users-profile.php ">
           <i class="bi bi-person"></i>
           <span>Profile</span>
         </a>
       </li><!-- End Profile Page Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'about.php') ? 'active' : 'collapsed'; ?>" href="about.php ">
-          <i class="bi bi-question-circle"></i>
-          <span>About Us</span>
-        </a>
-      </li><!-- End F.A.Q Page Nav -->
-
-      <li class="nav-item">
-        <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'contact.php') ? 'active' : 'collapsed'; ?>" href="contact.php ">
-          <i class="bi bi-envelope"></i>
-          <span>Contact</span>
-        </a>
-      </li><!-- End Contact Page Nav -->
 
       <li class="nav-item">
         <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == '../../login.php') ? 'active' : 'collapsed'; ?>" href="../../login.php">

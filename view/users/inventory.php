@@ -59,7 +59,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
                                     <td>
-                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-pencil-square"></i></button>
+                                        <button type="button" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border-color: #6CCF54" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-pencil-square"></i></button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -190,6 +190,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
         event.preventDefault();
@@ -226,14 +227,28 @@ while ($row = mysqli_fetch_assoc($result)) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Edit Successful',
+                    text: 'The inventory item has been updated successfully!',
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                alert('Error editing item: ' + (data.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Edit Unsuccessful',
+                    text: 'There was an error updating the inventory item. Please try again.',
+                });
             }
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Edit Unsuccessful',
+                text: 'There was an error updating the inventory item. Please try again.',
+            });
             console.error('Error:', error);
-            alert('Error editing item: ' + error.message);
         });
     });
 

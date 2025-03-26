@@ -16,24 +16,6 @@ while ($row = mysqli_fetch_assoc($result)) {
     $group = ucfirst($row['group']);
     $inventory[$group][] = $row;
 }
-
-// Example: Display SweetAlert for success or error messages
-if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
-    echo "<script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({
-                icon: '" . $_SESSION['code'] . "',
-                title: '" . $_SESSION['message'] . "',
-                confirmButtonColor: '#DB5C79'
-            });
-        });
-    </script>";
-    unset($_SESSION['message'], $_SESSION['code']);
-}
-?>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<?php
-// ...existing code...
 ?>
 
 <div class="pagetitle">
@@ -220,6 +202,7 @@ if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.getElementById('group').addEventListener('change', function () {
         const otherGroupInput = document.getElementById('otherGroup');
@@ -246,14 +229,28 @@ if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Add Successful',
+                    text: 'The inventory item has been added successfully!',
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                alert('Error adding item: ' + (data.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Add Unsuccessful',
+                    text: 'There was an error adding the inventory item. Please try again.',
+                });
             }
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Add Unsuccessful',
+                text: 'There was an error adding the inventory item. Please try again.',
+            });
             console.error('Error:', error);
-            alert('Error adding item: ' + error.message);
         });
     });
 
@@ -267,23 +264,29 @@ if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
         })
         .then(response => response.json())
         .then(data => {
-            Swal.fire({
-                icon: data.success ? 'success' : 'error',
-                title: data.message,
-                confirmButtonColor: '#DB5C79'
-            }).then(() => {
-                if (data.success) {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Edit Successful',
+                    text: 'The inventory item has been updated successfully!',
+                }).then(() => {
                     location.reload();
-                }
-            });
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Edit Unsuccessful',
+                    text: 'There was an error updating the inventory item. Please try again.',
+                });
+            }
         })
         .catch(error => {
             Swal.fire({
                 icon: 'error',
-                title: 'Error editing item',
-                text: error.message,
-                confirmButtonColor: '#DB5C79'
+                title: 'Edit Unsuccessful',
+                text: 'There was an error updating the inventory item. Please try again.',
             });
+            console.error('Error:', error);
         });
     });
 
@@ -298,14 +301,28 @@ if (isset($_SESSION['message']) && $_SESSION['code'] != '') {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Delete Successful',
+                    text: 'The inventory item has been deleted successfully!',
+                }).then(() => {
+                    location.reload();
+                });
             } else {
-                alert('Error deleting item: ' + (data.message || 'Unknown error'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Delete Unsuccessful',
+                    text: 'There was an error deleting the inventory item. Please try again.',
+                });
             }
         })
         .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Delete Unsuccessful',
+                text: 'There was an error deleting the inventory item. Please try again.',
+            });
             console.error('Error:', error);
-            alert('Error deleting item: ' + error.message);
         });
     });
 
