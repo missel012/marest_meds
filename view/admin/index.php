@@ -86,15 +86,15 @@ while ($row = mysqli_fetch_assoc($result)) {
 <div class="row">
   <!-- Info Cards -->
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #52e42e;">
+    <div class="card info-card low-stock-card" style="border: 3px solid #7ddf64;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
           <i class="bi bi-exclamation-triangle"></i>
         </div>
         <h6 class="mt-3">Low on Stock</h6>
         <h2><?php echo count($low_stock_medicines); ?></h2>
-        <button type="button" class="btn btn-custom mt-3" data-bs-toggle="modal" data-bs-target="#lowStockModal">View Details <i class="bi bi-chevron-right"></i></button>
-      </div>
+        <button type="button" class="btn btn-custom mt-3" data-bs-toggle="modal" data-bs-target="#lowStockModal" style="background-color: #7ddf64;">View Details <i class="bi bi-chevron-right"></i></button>
+      </div>  
     </div>
   </div>
 

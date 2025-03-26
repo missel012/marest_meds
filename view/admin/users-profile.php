@@ -1,6 +1,8 @@
 <?php
-// Ensure no output is sent before this point
-ob_start();
+// Ensure the session is started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Include SweetAlert library in the header
 echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
@@ -10,20 +12,48 @@ include("./includes/topbar.php");
 include("./includes/sidebar.php");
 include("../../dB/config.php"); // Ensure this file contains your database connection
 
+// Fetch user data from the database using the email stored in the session
+if (isset($_SESSION['email'])) {
+    $email = $_SESSION['email'];
+    $query = "SELECT firstName, lastName, email, profilePicture, birthday, gender, phoneNumber, role FROM users WHERE email = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+
+    // Update session variables with user data
+    $_SESSION['firstName'] = $user['firstName'];
+    $_SESSION['lastName'] = $user['lastName'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['profilePicture'] = $user['profilePicture'];
+    $_SESSION['birthday'] = $user['birthday'];
+    $_SESSION['gender'] = $user['gender'];
+    $_SESSION['phoneNumber'] = $user['phoneNumber'];
+    $_SESSION['role'] = $user['role'];
+} else {
+    // Redirect to login if email is not set in the session
+    header("Location: ../../login.php");
+    exit();
+}
+
 // Ensure the upload directory exists
 $uploadDir = '../../uploads/';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0777, true); // Create the directory if it doesn't exist
 }
 
-// Fetch user details
-$userId = 1; // Replace with dynamic user ID if needed
-$query = "SELECT firstName, lastName, email, profilePicture, birthday, gender, phoneNumber, role FROM users WHERE userId = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
+// Fetch user details from the session
+$user = [
+    'firstName' => $_SESSION['firstName'],
+    'lastName' => $_SESSION['lastName'],
+    'email' => $_SESSION['email'],
+    'profilePicture' => $_SESSION['profilePicture'],
+    'birthday' => $_SESSION['birthday'],
+    'gender' => $_SESSION['gender'],
+    'phoneNumber' => $_SESSION['phoneNumber'],
+    'role' => $_SESSION['role']
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
     $firstName = $_POST['firstName'];
@@ -67,54 +97,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
     $newPassword = $_POST['newPassword'];
     $renewPassword = $_POST['renewPassword'];
 
-    // Fetch the current password from the database
-    $passwordQuery = "SELECT password FROM users WHERE userId = ?";
+    // Fetch the current password from the database using the email
+    $passwordQuery = "SELECT userId, password FROM users WHERE email = ?";
     $stmt = $conn->prepare($passwordQuery);
-    $stmt->bind_param("i", $userId);
+    $stmt->bind_param("s", $_SESSION['email']);
     $stmt->execute();
     $result = $stmt->get_result();
-    $userPassword = $result->fetch_assoc()['password'];
+    $userData = $result->fetch_assoc();
 
-    // Check if the password is hashed
-    if (!password_verify($currentPassword, $userPassword)) {
-        if ($currentPassword !== $userPassword) {
-            $errorMessage = "Current password is incorrect.";
-        } else {
-            // Hash the plain text password in the database
-            $hashedPassword = password_hash($currentPassword, PASSWORD_DEFAULT);
-            $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
-            $stmt->prepare($updatePasswordQuery);
-            $stmt->bind_param("si", $hashedPassword, $userId);
-            $stmt->execute();
-            $userPassword = $hashedPassword;
-        }
-    }
+    if ($userData) {
+        $userId = $userData['userId'];
+        $userPassword = $userData['password'];
 
-    if (!$errorMessage && password_verify($currentPassword, $userPassword)) {
-        if ($newPassword === $renewPassword) {
-            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-            $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
-            $stmt->prepare($updatePasswordQuery);
-            $stmt->bind_param("si", $hashedPassword, $userId);
-
-            if ($stmt->execute()) {
-                echo "<script>
-                    Swal.fire({
-                        title: 'Success',
-                        text: 'Password changed successfully.',
-                        icon: 'success'
-                    }).then(() => {
-                        window.location = 'users-profile.php#profile-change-password';
-                    });
-                </script>";
+        // Check if the password is hashed
+        if (!password_verify($currentPassword, $userPassword)) {
+            if ($currentPassword !== $userPassword) {
+                $errorMessage = "Current password is incorrect.";
             } else {
-                $errorMessage = "Error updating password. Please try again.";
+                // Hash the plain text password in the database
+                $hashedPassword = password_hash($currentPassword, PASSWORD_DEFAULT);
+                $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
+                $stmt->prepare($updatePasswordQuery);
+                $stmt->bind_param("si", $hashedPassword, $userId);
+                $stmt->execute();
+                $userPassword = $hashedPassword;
             }
-        } else {
-            $errorMessage = "New passwords do not match.";
         }
-    } elseif (!$errorMessage) {
-        $errorMessage = "Current password is incorrect.";
+
+        if (!$errorMessage && password_verify($currentPassword, $userPassword)) {
+            if ($newPassword === $renewPassword) {
+                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+                $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
+                $stmt->prepare($updatePasswordQuery);
+                $stmt->bind_param("si", $hashedPassword, $userId);
+
+                if ($stmt->execute()) {
+                    echo "<script>
+                        Swal.fire({
+                            title: 'Success',
+                            text: 'Password changed successfully.',
+                            icon: 'success'
+                        }).then(() => {
+                            window.location = 'users-profile.php#profile-change-password';
+                        });
+                    </script>";
+                } else {
+                    $errorMessage = "Error updating password. Please try again.";
+                }
+            } else {
+                $errorMessage = "New passwords do not match.";
+            }
+        } elseif (!$errorMessage) {
+            $errorMessage = "Current password is incorrect.";
+        }
+    } else {
+        $errorMessage = "User not found.";
     }
 }
 ?>
@@ -147,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
       <div class="card text-center shadow-sm" style="border-radius: 15px; background-color: #DB5C79; color: #ffffff; position: relative; margin-top: 60px;">
         <div class="card-body" style="padding-top: 80px;">
           <div class="profile-picture-container" style="position: absolute; top: -60px; left: 50%; transform: translateX(-50%);">
-            <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>" 
+            <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : '../../assets/img/default-user.png' ?>" 
                  alt="Profile Picture" 
                  class="rounded-circle shadow" 
                  style="width: 150px; height: 150px; object-fit: cover; border: 5px solid #ffffff;">

@@ -1,15 +1,35 @@
 <?php
-include("../../dB/config.php"); // Ensure this file contains your database connection
+// Ensure the session is started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Fetch user details for the top bar
-$userId = 1; // Replace with dynamic user ID if needed
-$query = "SELECT firstName, lastName, profilePicture, role FROM users WHERE userId = ?";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("i", $userId);
-$stmt->execute();
-$result = $stmt->get_result();
-$user = $result->fetch_assoc();
-$role = ucfirst($user['role']); // Capitalize the first letter of the role
+// Include database connection
+include("../../dB/config.php");
+
+// Fetch user data from the database using the email stored in the session
+if (isset($_SESSION['email'])) {
+    $email = $_SESSION['email'];
+    $query = "SELECT firstName, lastName, profilePicture, role FROM users WHERE email = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+
+    // Update session variables with user data
+    $_SESSION['firstName'] = $user['firstName'];
+    $_SESSION['lastName'] = $user['lastName'];
+    $_SESSION['profilePicture'] = $user['profilePicture'];
+    $_SESSION['role'] = $user['role'];
+} else {
+    // Redirect to login if email is not set in the session
+    header("Location: ../../login.php");
+    exit();
+}
+
+// Define the $role variable using the session data
+$role = $_SESSION['role'] === 'user' ? 'Staff' : ucfirst($_SESSION['role']);
 ?>
 <!-- ======= Header ======= -->
 <header id="header" class="header fixed-top d-flex align-items-center">
@@ -120,11 +140,11 @@ $role = ucfirst($user['role']); // Capitalize the first letter of the role
     <li class="nav-item dropdown pe-3">
 
       <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-        <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>" 
+        <img src="<?= $_SESSION['profilePicture'] && file_exists($_SESSION['profilePicture']) ? htmlspecialchars($_SESSION['profilePicture']) : '../../assets/img/default-user.png' ?>" 
              alt="Profile" 
              class="rounded-circle" 
              style="width: 40px; height: 40px; object-fit: cover;">
-        <span class="d-none d-md-block dropdown-toggle ps-2"><?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName']) ?></span>
+        <span class="d-none d-md-block dropdown-toggle ps-2"><?= htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']) ?></span>
       </a><!-- End Profile Iamge Icon -->
 
       <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
@@ -146,18 +166,36 @@ $role = ucfirst($user['role']); // Capitalize the first letter of the role
           <hr class="dropdown-divider">
         </li>
 
-    
         <li>
-          <a class="dropdown-item d-flex align-items-center" href="../../login.php">
+          <a href="#" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#logoutModal">
             <i class="bi bi-box-arrow-right"></i>
             <span>Sign Out</span>
           </a>
         </li>
-
       </ul><!-- End Profile Dropdown Items -->
+
     </li><!-- End Profile Nav -->
 
   </ul>
 </nav><!-- End Icons Navigation -->
 
 </header><!-- End Header -->
+
+<!-- Logout Confirmation Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to logout?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="../../logout.php" class="btn btn-primary">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>
