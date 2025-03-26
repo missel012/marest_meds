@@ -37,19 +37,41 @@ $staff_result = mysqli_query($conn, $staff_query);
 $staff_data = mysqli_fetch_assoc($staff_result);
 $staff_on_shift = $staff_data['staff_on_shift'];
 
-// Fetch orders data for the graph
-$query = "SELECT DATE(datetime) as order_date, COUNT(orderId) as total_orders FROM `order` GROUP BY DATE(datetime)";
+// Fetch orders and calculate total revenue for each order
+$query = "
+    SELECT 
+        DATE(o.datetime) AS order_date, 
+        SUM(oi.total) AS total_revenue
+    FROM 
+        `order` o
+    INNER JOIN 
+        order_items oi 
+    ON 
+        o.orderId = oi.orderId
+    GROUP BY 
+        DATE(o.datetime)
+    ORDER BY 
+        DATE(o.datetime) ASC
+";
 $result = mysqli_query($conn, $query);
 
 if (!$result) {
     die("Query failed: " . mysqli_error($conn));
 }
 
-$orders = [];
+$graphData = [];
 while ($row = mysqli_fetch_assoc($result)) {
-    $orders[] = $row;
+    $graphData[] = [
+        'order_date' => $row['order_date'],
+        'total_revenue' => $row['total_revenue']
+    ];
 }
+
+// Pass graph data to JavaScript
 ?>
+<script>
+    const graphData = <?php echo json_encode($graphData); ?>;
+</script>
 
 <div class="pagetitle">
   <h1>Dashboard</h1>
@@ -152,13 +174,12 @@ while ($row = mysqli_fetch_assoc($result)) {
         <div id="areaChart"></div>
         <script>
           document.addEventListener("DOMContentLoaded", () => {
-            const ordersData = <?= json_encode($orders) ?>;
-            const labels = ordersData.map(order => order.order_date);
-            const data = ordersData.map(order => order.total_orders);
+            const labels = graphData.map(data => data.order_date);
+            const data = graphData.map(data => data.total_revenue);
 
             new ApexCharts(document.querySelector("#areaChart"), {
               series: [{
-                name: "Total Orders",
+                name: "Total Revenue",
                 data: data
               }],
               chart: {
@@ -172,18 +193,15 @@ while ($row = mysqli_fetch_assoc($result)) {
                 enabled: false
               },
               stroke: {
-                curve: 'straight',
-                colors: ['#DB5C79']
-              },
-              fill: {
-                colors: ['#DB5C79', '#FFDEE6']
+                curve: 'smooth'
               },
               subtitle: {
-                text: 'Order Movements',
+                text: 'Revenue Movements',
                 align: 'left'
               },
-              labels: labels,
+              colors: ['#DB5C79'],
               xaxis: {
+                categories: labels,
                 type: 'datetime',
               },
               yaxis: {
