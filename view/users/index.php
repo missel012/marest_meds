@@ -18,24 +18,12 @@ while ($row = mysqli_fetch_assoc($low_stock_result)) {
     $low_stock_medicines[] = $row;
 }
 
-// Determine current shift
-date_default_timezone_set('Asia/Manila'); // Set the timezone
-$current_hour = date('H');
-if ($current_hour >= 8 && $current_hour < 12) {
-    $current_shift = 'Day';
-} elseif ($current_hour >= 12 && $current_hour < 17) {
-    $current_shift = 'Afternoon';
-} elseif ($current_hour >= 17 && $current_hour < 21) {
-    $current_shift = 'Night';
-} else {
-    $current_shift = 'None';
-}
-
-// Fetch number of staff on current shift
-$staff_query = "SELECT COUNT(*) AS staff_on_shift FROM staff WHERE shifts = '$current_shift'";
-$staff_result = mysqli_query($conn, $staff_query);
-$staff_data = mysqli_fetch_assoc($staff_result);
-$staff_on_shift = $staff_data['staff_on_shift'];
+// Fetch orders for the current day
+$current_date = date('Y-m-d');
+$orders_query = "SELECT COUNT(*) AS orders_today FROM `order` WHERE DATE(datetime) = '$current_date'";
+$orders_result = mysqli_query($conn, $orders_query);
+$orders_data = mysqli_fetch_assoc($orders_result);
+$orders_today = $orders_data['orders_today'];
 
 // Fetch orders and calculate total revenue for each order
 $query = "
@@ -86,7 +74,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 <div class="row">
   <!-- Info Cards -->
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #52e42e;">
+    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
           <i class="bi bi-exclamation-triangle"></i>
@@ -99,27 +87,27 @@ while ($row = mysqli_fetch_assoc($result)) {
   </div>
 
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card inventory-card">
+    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
           <i class="bi bi-capsule"></i>
         </div>
         <h6 class="mt-3">Medicines Available</h6>
         <h2><?php echo $total_medicines; ?></h2>
-        <a href="inventory.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">Visit Inventory <i class="bi bi-chevron-right"></i></a>
+        <a href="inventory.php" class="btn btn-custom mt-3">Visit Inventory <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
   </div>
 
   <div class="col-lg-4 col-md-6">
-    <div class="card info-card staff-card">
+    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
       <div class="card-body text-center">
         <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-people"></i>
+          <i class="bi bi-cart"></i>
         </div>
-        <h6 class="mt-3">Staffs on Shift</h6>
-        <h2><?php echo $staff_on_shift; ?></h2>
-        <a href="staff.php" class="btn btn-custom mt-3" style="background-color: #7ddf64;">View Staffs <i class="bi bi-chevron-right"></i></a>
+        <h6 class="mt-3">Orders This Day</h6>
+        <h2><?php echo $orders_today; ?></h2>
+        <a href="prescriptionOrders.php" class="btn btn-custom mt-3">View Orders <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
   </div>
@@ -317,7 +305,7 @@ include("./includes/footer.php");
   font-size: 14px;
   font-weight: 600;
   color: #fff;
-  background: #52e42e;
+  background: #6CCF54;
   border: none;
   border-radius: 5px;
   padding: 10px 20px;
@@ -326,5 +314,4 @@ include("./includes/footer.php");
 .info-card .btn:hover {
   background: #5bbf4a;
 }
-
-  </style>
+</style>
