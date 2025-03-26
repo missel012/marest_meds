@@ -59,8 +59,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
 // Handle delete staff
 if (isset($_GET['delete_id'])) {
   $delete_id = $_GET['delete_id'];
+  // Get the email of the staff to be deleted
+  $email_query = "SELECT email FROM staff WHERE staff_id = '$delete_id'";
+  $email_result = mysqli_query($conn, $email_query);
+  $email_row = mysqli_fetch_assoc($email_result);
+  $email = $email_row['email'];
+
+  // Delete the staff
   $delete_query = "DELETE FROM staff WHERE staff_id = '$delete_id'";
   if (mysqli_query($conn, $delete_query)) {
+    // Clear the role in the users table
+    $clear_role_query = "UPDATE users SET role = '' WHERE email = '$email'";
+    mysqli_query($conn, $clear_role_query);
+
     $_SESSION['message'] = "Staff deleted successfully.";
     $_SESSION['code'] = "success";
   } else {
@@ -179,7 +190,7 @@ $unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
                   echo "<td>" . $status_icon . "</td>";
                   echo '<td>
                           <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
-                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
+                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
                         </td>';
                   echo "</tr>";
                 }
@@ -326,6 +337,27 @@ document.addEventListener("DOMContentLoaded", function() {
     if (shiftCell && shiftCell.textContent.trim() === currentShift) {
       row.classList.add("highlight");
     }
+  });
+
+  // Add event listener for delete buttons
+  document.querySelectorAll('.btn-danger').forEach(button => {
+    button.addEventListener('click', function(event) {
+      event.preventDefault();
+      const deleteUrl = this.getAttribute('href');
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DB5C79',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = deleteUrl;
+        }
+      });
+    });
   });
 });
 </script>
