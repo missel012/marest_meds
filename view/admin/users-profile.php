@@ -60,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
     }
 }
 
+$errorMessage = null; // Initialize an error message variable
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
     $currentPassword = $_POST['currentPassword'];
     $newPassword = $_POST['newPassword'];
@@ -75,43 +77,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
 
     // Check if the password is hashed
     if (!password_verify($currentPassword, $userPassword)) {
-        // If the password is not hashed, compare it as plain text
         if ($currentPassword !== $userPassword) {
-            echo "<script>Swal.fire('Error', 'Current password is incorrect.', 'error').then(() => { document.querySelector('[data-bs-target=\"#profile-change-password\"]').click(); });</script>";
-            return;
+            $errorMessage = "Current password is incorrect.";
+        } else {
+            // Hash the plain text password in the database
+            $hashedPassword = password_hash($currentPassword, PASSWORD_DEFAULT);
+            $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
+            $stmt->prepare($updatePasswordQuery);
+            $stmt->bind_param("si", $hashedPassword, $userId);
+            $stmt->execute();
+            $userPassword = $hashedPassword;
         }
-
-        // Hash the plain text password in the database
-        $hashedPassword = password_hash($currentPassword, PASSWORD_DEFAULT);
-        $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
-        $stmt->prepare($updatePasswordQuery);
-        $stmt->bind_param("si", $hashedPassword, $userId);
-        $stmt->execute();
-        $userPassword = $hashedPassword; // Update the variable to the hashed password
     }
 
-    // Verify the current password
-    if (password_verify($currentPassword, $userPassword)) {
+    if (!$errorMessage && password_verify($currentPassword, $userPassword)) {
         if ($newPassword === $renewPassword) {
-            // Update the password
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
             $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
             $stmt->prepare($updatePasswordQuery);
             $stmt->bind_param("si", $hashedPassword, $userId);
 
             if ($stmt->execute()) {
-                echo "<script>Swal.fire('Success', 'Password changed successfully.', 'success').then(() => { window.location = 'users-profile.php'; });</script>";
+                echo "<script>
+                    Swal.fire({
+                        title: 'Success',
+                        text: 'Password changed successfully.',
+                        icon: 'success'
+                    }).then(() => {
+                        window.location = 'users-profile.php#profile-change-password';
+                    });
+                </script>";
             } else {
-                echo "<script>Swal.fire('Error', 'Error updating password. Please try again.', 'error').then(() => { document.querySelector('[data-bs-target=\"#profile-change-password\"]').click(); });</script>";
+                $errorMessage = "Error updating password. Please try again.";
             }
         } else {
-            echo "<script>Swal.fire('Error', 'New passwords do not match.', 'error').then(() => { document.querySelector('[data-bs-target=\"#profile-change-password\"]').click(); });</script>";
+            $errorMessage = "New passwords do not match.";
         }
-    } else {
-        echo "<script>Swal.fire('Error', 'Current password is incorrect.', 'error').then(() => { document.querySelector('[data-bs-target=\"#profile-change-password\"]').click(); });</script>";
+    } elseif (!$errorMessage) {
+        $errorMessage = "Current password is incorrect.";
     }
 }
 ?>
+
+<?php if ($errorMessage): ?>
+<script>
+    Swal.fire({
+        title: 'Error',
+        text: '<?= htmlspecialchars($errorMessage) ?>',
+        icon: 'error'
+    }).then(() => {
+        document.querySelector('[data-bs-target="#profile-change-password"]').click();
+    });
+</script>
+<?php endif; ?>
 
 <div class="pagetitle">
   <h1>User Profile</h1>
@@ -145,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
     </div>
 
     <div class="col-xl-8">
-      <div class="card shadow-sm" style="border-radius: 15px; background-color: #6CCF54; color: #ffffff; margin-top: 60px;">
+      <div class="card shadow-sm" style="border-radius: 15px; border: 2px solid #6CCF54; background-color: #ffffff; color: #000000; margin-top: 60px;">
         <div class="card-body pt-3">
           <!-- Bordered Tabs -->
           <ul class="nav nav-tabs nav-tabs-bordered">
@@ -161,26 +179,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
           </ul>
           <style>
             .nav-tabs .nav-link {
-              color: #ffffff; /* Default color for inactive tabs */
+              color: #000000; /* Default color for inactive tabs */
               transition: color 0.3s ease, border-color 0.3s ease; /* Smooth transition for color and border */
             }
             .nav-tabs .nav-link.active {
-              color: #DB5C79 !important; /* Color for active tab */
-              border-color: #DB5C79 !important; /* Change underline color for active tab */
+              color: #6CCF54 !important; /* Color for active tab */
+              border-color: #6CCF54 !important; /* Change underline color for active tab */
             }
             .nav-tabs .nav-link:hover {
-              color: #DB5C79; /* Hover color for inactive tabs */
-            }
-          </style>
-          <style>
-            body, .card-title, .breadcrumb-item a, .breadcrumb-item, .form-label, .nav-tabs .nav-link, .btn, .label {
-              color: #ffffff !important; /* Set all text to white */
+              color: #6CCF54; /* Hover color for inactive tabs */
             }
           </style>
           <div class="tab-content pt-2">
             <div class="tab-pane fade show active profile-overview" id="profile-overview">
               <!-- Profile Details Section -->
-              <h5 class="card-title text-center" style="font-size: 1.5rem; color: #ffffff;">Profile Details</h5>
+              <h5 class="card-title text-center" style="font-size: 1.5rem; color: #000000;">Profile Details</h5>
               <div class="row">
                 <div class="col-lg-3 col-md-4 label">Full Name</div>
                 <div class="col-lg-9 col-md-8"><?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName']) ?></div>
@@ -206,13 +219,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
               <!-- Profile Edit Form -->
               <form method="POST" enctype="multipart/form-data">
                 <div class="row mb-3">
-                  <label for="profileImage" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">Profile Image</label>
+                  <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
                   <div class="col-md-8 col-lg-9">
                     <div class="d-flex justify-content-center">
                       <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>" 
                            alt="Profile" 
-                           class="shadow" 
-                           style="width: 150px; height: 150px; object-fit: cover; border-radius: 50%; border: 5px solid #ffffff;">
+                           class="shadow">
                     </div>
                     <div class="pt-2">
                       <input type="file" name="profilePicture" class="form-control">
@@ -220,25 +232,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label for="firstName" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">First Name</label>
+                  <label for="firstName" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">First Name</label>
                   <div class="col-md-8 col-lg-9">
                     <input name="firstName" type="text" class="form-control" id="firstName" value="<?= htmlspecialchars($user['firstName']) ?>" required style="color: black;">
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label for="lastName" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">Last Name</label>
+                  <label for="lastName" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Last Name</label>
                   <div class="col-md-8 col-lg-9">
                     <input name="lastName" type="text" class="form-control" id="lastName" value="<?= htmlspecialchars($user['lastName']) ?>" required style="color: black;">
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label for="birthday" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">Birthday</label>
+                  <label for="birthday" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Birthday</label>
                   <div class="col-md-8 col-lg-9">
                     <input name="birthday" type="date" class="form-control" id="birthday" value="<?= htmlspecialchars($user['birthday']) ?>" required style="color: black;">
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label for="gender" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">Gender</label>
+                  <label for="gender" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Gender</label>
                   <div class="col-md-8 col-lg-9">
                     <select name="gender" class="form-select" id="gender" required style="color: black;">
                       <option value="Male" <?= $user['gender'] === 'Male' ? 'selected' : '' ?>>Male</option>
@@ -247,13 +259,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label for="phoneNumber" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">Phone</label>
+                  <label for="phoneNumber" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Phone</label>
                   <div class="col-md-8 col-lg-9">
                     <input name="phoneNumber" type="text" class="form-control" id="phoneNumber" value="<?= htmlspecialchars($user['phoneNumber']) ?>" required style="color: black;">
                   </div>
                 </div>
                 <div class="row mb-3">
-                  <label for="email" class="col-md-4 col-lg-3 col-form-label" style="color: #ffffff;">Email</label>
+                  <label for="email" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Email</label>
                   <div class="col-md-8 col-lg-9">
                     <input name="email" type="email" class="form-control" id="email" value="<?= htmlspecialchars($user['email']) ?>" required style="color: black;">
                   </div>

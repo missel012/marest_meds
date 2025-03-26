@@ -68,19 +68,7 @@ $user = $result->fetch_assoc();
     </a>
   </li><!-- End Profile Page Nav -->
 
-  <li class="nav-item">
-  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'pages-about.php' ? 'active' : 'collapsed'; ?>" href="pages-about.php">
-      <i class="bi bi-question-circle"></i>
-      <span>About us</span>
-    </a>
-  </li><!-- End F.A.Q Page Nav -->
 
-  <li class="nav-item">
-  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'pages-contact.php' ? 'active' : 'collapsed'; ?>" href="pages-contact.php">
-      <i class="bi bi-envelope"></i>
-      <span>Contact</span>
-    </a>
-  </li><!-- End Contact Page Nav -->
 
   <li class="nav-item">
   <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'login.php' ? 'active' : 'collapsed'; ?>" href="../../login.php">
