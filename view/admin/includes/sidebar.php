@@ -1,15 +1,28 @@
+<?php
+include("../../dB/config.php"); // Ensure this file contains your database connection
+
+// Fetch user details for the sidebar
+$userId = 1; // Replace with dynamic user ID if needed
+$query = "SELECT firstName, lastName, profilePicture, role FROM users WHERE userId = ?";
+$stmt = $conn->prepare($query);
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+?>
 <!-- ======= Sidebar ======= -->
 <aside id="sidebar" class="sidebar">
 
-
 <ul class="sidebar-nav" id="sidebar-nav">
 
- <!-- Profile Section -->
- <div class="profile-sidebar">
-    <img src="../../assets/img/esther-icon.png" alt="Profile Image" class="profile-img-sidebar">
+  <!-- Profile Section -->
+  <div class="profile-sidebar">
+    <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>" 
+         alt="Profile Image" 
+         class="profile-img-sidebar">
     <div class="profile-info-sidebar">
-      <h4>Esther</h4>
-      <span>Super Admin</span>
+      <h4 style="color: black;"><?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName']) ?></h4>
+      <span><?= $user['role'] === 'admin' ? 'Admin' : 'Staff' ?></span>
     </div>
   </div>
   <!-- End Profile Section -->
@@ -55,19 +68,7 @@
     </a>
   </li><!-- End Profile Page Nav -->
 
-  <li class="nav-item">
-  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'pages-about.php' ? 'active' : 'collapsed'; ?>" href="pages-about.php">
-      <i class="bi bi-question-circle"></i>
-      <span>About us</span>
-    </a>
-  </li><!-- End F.A.Q Page Nav -->
 
-  <li class="nav-item">
-  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'pages-contact.php' ? 'active' : 'collapsed'; ?>" href="pages-contact.php">
-      <i class="bi bi-envelope"></i>
-      <span>Contact</span>
-    </a>
-  </li><!-- End Contact Page Nav -->
 
   <li class="nav-item">
   <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'login.php' ? 'active' : 'collapsed'; ?>" href="../../login.php">
@@ -262,6 +263,7 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
+    color: black;
   }
 
   .profile-info-sidebar span {

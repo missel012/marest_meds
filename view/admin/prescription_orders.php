@@ -39,7 +39,7 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
       <input type="date" class="form-control" id="dateRange" placeholder="Date Range">
       <label for="dateRange">Date Range</label>
     </div>
-  </div>
+  </form>
 
   <div class="col-md-4">
     <div class="form-floating">
@@ -81,6 +81,8 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
               series: [{
                 name: "Total Revenue",
                 data: data
+                name: "Total Revenue",
+                data: data
               }],
               chart: {
                 type: 'area',
@@ -97,8 +99,11 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
               },
               subtitle: {
                 text: 'Revenue Movements',
+                text: 'Revenue Movements',
                 align: 'left'
               },
+              colors: ['#DB5C79'], // Changed color here
+              labels: labels,
               colors: ['#DB5C79'], // Changed color here
               labels: labels,
               xaxis: {
@@ -151,6 +156,177 @@ while ($row = mysqli_fetch_assoc($result_all_orders)) {
   </div>
 
 </div>
+
+<!-- Expanded Orders Modal -->
+<div class="modal fade" id="expandedOrdersModal" tabindex="-1" aria-labelledby="expandedOrdersModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-fullscreen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="expandedOrdersModalLabel">Expanded Orders Table</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th scope="col">Order ID</th>
+                <th scope="col">Generic Name</th>
+                <th scope="col">Brand Name</th>
+                <th scope="col">Milligram</th>
+                <th scope="col">Dosage Form</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Group</th>
+                <th scope="col">Total</th>
+                <th scope="col">Date and Time</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($orders as $orderId => $order) : ?>
+                <tr>
+                  <td>ORDER-00<?= htmlspecialchars($orderId) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['genericName']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['brandName']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['milligram']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['dosageForm']) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['quantity']) ?></td>
+                  <td>₱<?= number_format($order['items'][0]['price'], 2) ?></td>
+                  <td><?= htmlspecialchars($order['items'][0]['group']) ?></td>
+                  <td>₱<?= number_format($order['items'][0]['total'], 2) ?></td>
+                  <td><?= htmlspecialchars($order['datetime']) ?></td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteOrderModal" data-id="<?= $orderId ?>">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Order Modal -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-labelledby="addOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addOrderModalLabel">Add Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addOrderForm">
+          <div class="mb-3">
+            <label for="genericName" class="form-label">Generic Name</label>
+            <input type="text" class="form-control" id="genericName" name="genericName" required>
+          </div>
+          <div class="mb-3">
+            <label for="brandName" class="form-label">Brand Name</label>
+            <input type="text" class="form-control" id="brandName" name="brandName" required>
+          </div>
+          <div class="mb-3">
+            <label for="quantity" class="form-label">Quantity</label>
+            <input type="number" class="form-control" id="quantity" name="quantity" required>
+          </div>
+          <div class="mb-3">
+            <label for="total" class="form-label">Total</label>
+            <input type="number" step="0.01" class="form-control" id="total" name="total" required>
+          </div>
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Order</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Order Modal -->
+<div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-labelledby="deleteOrderModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteOrderModalLabel">Delete Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this order?</p>
+        <form id="deleteOrderForm">
+          <input type="hidden" id="deleteOrderId" name="orderId">
+          <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Delete</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('addOrderForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('add_order.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Error adding order: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error adding order: ' + error.message);
+    });
+  });
+
+  document.getElementById('deleteOrderForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('delete_order.php', {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Error deleting order: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error deleting order: ' + error.message);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const deleteOrderModal = document.getElementById('deleteOrderModal');
+
+    deleteOrderModal.addEventListener('show.bs.modal', function (event) {
+      const button = event.relatedTarget;
+      const orderId = button.getAttribute('data-id');
+      document.getElementById('deleteOrderId').value = orderId;
+    });
+  });
+</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
