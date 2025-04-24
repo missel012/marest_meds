@@ -107,39 +107,48 @@ $orderRow = mysqli_fetch_assoc($orderResult);
 $nextOrderId = $orderRow['lastOrderId'] + 1;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'deleteOrder') {
-    header('Content-Type: application/json');
-    $orderId = isset($_POST['orderId']) ? intval($_POST['orderId']) : 0;
+  header('Content-Type: application/json');
+  
+  $orderId = isset($_POST['orderId']) ? intval($_POST['orderId']) : 0;
 
-    if ($orderId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
-        exit;
-    }
+  if ($orderId <= 0) {
+      echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
+      exit;
+  }
 
-    $conn->begin_transaction();
+  // Delete rows from order_items and order tables
+  $deleteItemsQuery = "DELETE FROM order_items WHERE orderId = ?";
+  $deleteOrderQuery = "DELETE FROM `order` WHERE orderId = ?";
 
-    try {
-        // Delete from order_items table
-        $deleteItemsQuery = "DELETE FROM order_items WHERE orderId = ?";
-        $stmt = $conn->prepare($deleteItemsQuery);
-        $stmt->bind_param("i", $orderId);
-        $stmt->execute();
-        $stmt->close();
+  $response = ['success' => false, 'message' => ''];
 
-        // Delete from order table
-        $deleteOrderQuery = "DELETE FROM `order` WHERE orderId = ?";
-        $stmt = $conn->prepare($deleteOrderQuery);
-        $stmt->bind_param("i", $orderId);
-        $stmt->execute();
-        $stmt->close();
+  try {
+      $stmt1 = $conn->prepare($deleteItemsQuery);
+      $stmt2 = $conn->prepare($deleteOrderQuery);
 
-        $conn->commit();
+      if ($stmt1 && $stmt2) {
+          $stmt1->bind_param("i", $orderId);
+          $stmt2->bind_param("i", $orderId);
 
-        echo json_encode(['success' => true, 'message' => 'Order deleted successfully.']);
-    } catch (Exception $e) {
-        $conn->rollback();
-        echo json_encode(['success' => false, 'message' => 'Failed to delete order: ' . $e->getMessage()]);
-    }
-    exit;
+          $success = $stmt1->execute() && $stmt2->execute();
+          
+          if ($success) {
+              $response = ['success' => true, 'message' => 'Order and related items deleted successfully.'];
+          } else {
+              $response = ['success' => false, 'message' => 'Database error: ' . $conn->error];
+          }
+
+          $stmt1->close();
+          $stmt2->close();
+      } else {
+          $response = ['success' => false, 'message' => 'Failed to prepare statements.'];
+      }
+  } catch (Exception $e) {
+      $response = ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+  }
+
+  echo json_encode($response);
+  exit; // This is crucial to prevent HTML output
 }
 ?>
 <script>
@@ -1019,15 +1028,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
   document.getElementById('deleteOrderForm').addEventListener('submit', function(event) {
     event.preventDefault();
     const formData = new FormData(this);
-    formData.append('action', 'deleteOrder'); // Add action parameter
+    formData.append('action', 'deleteOrder');
 
-    fetch('prescription_orders.php', { // Send request to the same file
+    fetch('prescription_orders.php', {
         method: 'POST',
         body: formData
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            return response.text().then(text => {
+                throw new Error(text || 'Network response was not ok');
+            });
         }
         return response.json();
     })
@@ -1044,7 +1055,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             Swal.fire({
                 icon: 'error',
                 title: 'Delete Failed',
-                text: data.message || 'An unknown error occurred while deleting the order.',
+                text: data.message || 'Failed to delete order',
             });
         }
     })
@@ -1052,11 +1063,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         Swal.fire({
             icon: 'error',
             title: 'Delete Failed',
-            text: error.message || 'An error occurred while deleting the order.',
+            text: 'An error occurred: ' + error.message,
         });
         console.error('Error:', error);
     });
-  });
+});
 
   document.addEventListener('DOMContentLoaded', function() {
     const deleteOrderModal = document.getElementById('deleteOrderModal');
