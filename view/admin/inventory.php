@@ -222,7 +222,7 @@ while ($row = mysqli_fetch_assoc($result)) {
             formData.set('group', document.getElementById('otherGroup').value);
         }
 
-        fetch('add_inventory.php', {
+        fetch('inventory_add.php', {
             method: 'POST',
             body: formData
         })
@@ -258,7 +258,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         event.preventDefault();
         const formData = new FormData(this);
 
-        fetch('edit_inventory.php', {
+        fetch('inventory_edit.php', {
             method: 'POST',
             body: formData
         })
@@ -294,7 +294,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         event.preventDefault();
         const formData = new FormData(this);
 
-        fetch('delete_inventory.php', {
+        fetch('inventory_delete.php', {
             method: 'POST',
             body: formData
         })
@@ -334,7 +334,7 @@ while ($row = mysqli_fetch_assoc($result)) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
 
-            fetch('get_inventory.php?id=' + inventoryId)
+            fetch('inventory_get.php?id=' + inventoryId)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('editInventoryId').value = data.inventoryId;

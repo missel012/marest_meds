@@ -61,7 +61,7 @@ if (isset($_SESSION['email'])) {
 
 
     <li class="nav-item">
-    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'prescription_orders.php' ? 'active' : 'collapsed'; ?>" href="prescription_orders.php">
+    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'orders_prescription.php' ? 'active' : 'collapsed'; ?>" href="orders_prescription.php">
         <i class="bi bi-person"></i>
         <span>Prescription Orders</span>
       </a>
@@ -80,7 +80,7 @@ if (isset($_SESSION['email'])) {
   <li class="nav-heading">Pages</li>
 
   <li class="nav-item">
-  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'users-profile.php' ? 'active' : 'collapsed'; ?>" href="users-profile.php">
+  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : 'collapsed'; ?>" href="profile.php">
       <i class="bi bi-person"></i>
       <span>Profile</span>
     </a>

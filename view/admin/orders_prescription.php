@@ -42,7 +42,7 @@ $result = $stmt->get_result();
 
 $orders = [];
 while ($row = $result->fetch_assoc()) {
-  $orders[$row['orderId']]['datetime'] = $row['datetime'];
+  $orders[$row['orderId']]['dateordetime'] = $row['datetime'];
   $orders[$row['orderId']]['items'][] = $row;
 }
 
@@ -166,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 </div><!-- End Page Title -->
 
 <div class="row g-3 align-items-end">
-  <form method="GET" action="prescription_orders.php" class="col-md-8">
+  <form method="GET" action="orders_prescription.php" class="col-md-8">
     <div class="input-group">
       <input type="text" class="form-control" id="search" name="search" placeholder="Search" value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
       <button type="submit" class="btn btn-primary" style="background: #DB5C79; border: none">
@@ -734,7 +734,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
   async function fetchLatestOrderId() {
     try {
-      const response = await fetch('fetch_latest_order_id.php');
+      const response = await fetch('orders_latest_id_get.php');
       const data = await response.json();
       if (data.success) {
         nextOrderId = data.nextOrderId;
@@ -889,7 +889,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     cartSummary.querySelector('.card-body').innerHTML = receiptContent;
 
     // Send the cart data to the server
-    fetch('post_order.php', {
+    fetch('orders_post.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1030,7 +1030,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     const formData = new FormData(this);
     formData.append('action', 'deleteOrder');
 
-    fetch('prescription_orders.php', {
+    fetch('orders_prescription.php', {
         method: 'POST',
         body: formData
     })

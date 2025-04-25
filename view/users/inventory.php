@@ -220,7 +220,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         formData.append('inventoryId', document.getElementById('editInventoryId').value);
         formData.append('quantity', document.getElementById('editQuantity').value);
 
-        fetch('edit_inventory.php', {
+        fetch('inventory_edit.php', {
             method: 'POST',
             body: formData
         })
@@ -282,7 +282,7 @@ while ($row = mysqli_fetch_assoc($result)) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
 
-            fetch('get_inventory.php?id=' + inventoryId)
+            fetch('inventory_get.php?id=' + inventoryId)
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('editInventoryId').value = data.inventoryId;

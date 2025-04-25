@@ -336,7 +336,7 @@ include("./includes/footer.php");
 
     async function fetchLatestOrderId() {
         try {
-            const response = await fetch('fetch_latest_order_id.php');
+            const response = await fetch('orders_latest_id_get.php');
             const data = await response.json();
             if (data.success) {
                 nextOrderId = data.nextOrderId;
@@ -491,7 +491,7 @@ include("./includes/footer.php");
         cartSummary.querySelector('.card-body').innerHTML = receiptContent;
 
         // Send the cart data to the server
-        fetch('post_order.php', {
+        fetch('orders_post.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

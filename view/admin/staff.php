@@ -189,7 +189,7 @@ $unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
                   echo "<td>" . $row['shifts'] . "</td>";
                   echo "<td>" . $status_icon . "</td>";
                   echo '<td>
-                          <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
+                          <a href="staff_edit.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
                           <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
                         </td>';
                   echo "</tr>";

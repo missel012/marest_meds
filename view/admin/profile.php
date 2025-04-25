@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
     $stmt->bind_param("sssssssi", $firstName, $lastName, $birthday, $gender, $phoneNumber, $email, $profilePicture, $userId);
 
     if ($stmt->execute()) {
-        echo "<script>Swal.fire('Success', 'Profile updated successfully.', 'success').then(() => { window.location = 'users-profile.php'; });</script>";
+        echo "<script>Swal.fire('Success', 'Profile updated successfully.', 'success').then(() => { window.location = 'profile.php'; });</script>";
     } else {
         echo "<script>Swal.fire('Error', 'Error updating profile. Please try again.', 'error');</script>";
     }
@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
                             text: 'Password changed successfully.',
                             icon: 'success'
                         }).then(() => {
-                            window.location = 'users-profile.php#profile-change-password';
+                            window.location = 'profile.php#profile-change-password';
                         });
                     </script>";
                 } else {
