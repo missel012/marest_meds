@@ -36,8 +36,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Redirect based on role
             if ($user['role'] === 'admin') {
                 header("Location: ../view/admin/index.php");
-            } else {
+            } elseif ($user['role'] === 'users') {
                 header("Location: ../view/users/index.php");
+            } elseif ($user['role'] === 'customer') {
+                header("Location: ../view/customer/index.php");
+            } else {
+                $_SESSION['message'] = "Unknown role.";
+                $_SESSION['code'] = "error";
+                header("Location: ../login.php");
             }
             exit();
         } else {
