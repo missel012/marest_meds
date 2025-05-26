@@ -118,6 +118,10 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
     </div>
 </section>
 
+<?php
+include("./includes/footer.php");
+?>
+
 <!-- Add Inventory Modal -->
 <div class="modal fade" id="addInventoryModal" tabindex="-1" aria-labelledby="addInventoryModalLabel" aria-hidden="true">
     <div class="modal-dialog">
