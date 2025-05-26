@@ -47,21 +47,21 @@ if (isset($_SESSION['email'])) {
     <li class="nav-item">
       <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'active' : 'collapsed'; ?>" href="index.php">
         <i class="bi bi-grid"></i>
-        <span>Dashboard</span>
+        <span>Home</span>
       </a>
     </li><!-- End Dashboard Nav -->
 
     <li class="nav-item">
-      <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'inventory.php') ? 'active' : 'collapsed'; ?>" href="inventory.php">
+      <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'products.php') ? 'active' : 'collapsed'; ?>" href="products.php">
         <i class="bi bi-box-seam"></i>
-        <span>Inventory</span>
+        <span>Products</span>
       </a>
     </li><!-- End Medicine Available Nav -->
 
     <li class="nav-item">
-      <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'orders_prescription.php') ? 'active' : 'collapsed'; ?>" href="orders_prescription.php ">
+      <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'track_orders.php') ? 'active' : 'collapsed'; ?>" href="track_orders.php ">
         <i class="bi bi-basket3"></i>
-        <span>Prescription Orders</span>
+        <span>Track Orders</span>
       </a>
     </li><!-- End Prescription Orders Nav -->
 

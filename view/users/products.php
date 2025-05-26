@@ -1,8 +1,11 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
-include("../../dB/config.php");
+include("../../dB/config.php"); // Ensure this file contains your database connection
 
 // Fetch inventory items grouped by category
 $query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
@@ -21,17 +24,19 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
 ?>
 
 <div class="pagetitle">
-    <h1>Prescription Orders</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Products</h1>
+    </div>
     <nav>
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-            <li class="breadcrumb-item active"><a href="orders_prescription.php">Prescription Orders</a></li>
+            <li class="breadcrumb-item active"><a href="products.php">Products</a></li>
         </ol>
     </nav>
 </div><!-- End Page Title -->
 
 <section class="section">
-    <div class="row align-items-top">
+<div class="row align-items-top">
         <div class="d-flex flex-row w-100">
             <!-- Left Card -->
             <div class="card" style="flex: 3; margin-right: 10px;">
@@ -113,9 +118,124 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
     </div>
 </section>
 
-<?php
-include("./includes/footer.php");
-?>
+<!-- Add Inventory Modal -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1" aria-labelledby="addInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addInventoryModalLabel">Add Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addInventoryForm">
+                    <div class="mb-3">
+                        <label for="genericName" class="form-label">Generic Name</label>
+                        <input type="text" class="form-control" id="genericName" name="genericName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="brandName" class="form-label">Brand Name</label>
+                        <input type="text" class="form-control" id="brandName" name="brandName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="milligram" class="form-label">Milligram</label>
+                        <input type="text" class="form-control" id="milligram" name="milligram" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dosageForm" class="form-label">Dosage</label>
+                        <input type="text" class="form-control" id="dosageForm" name="dosageForm" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="group" class="form-label">Group</label>
+                        <input type="text" class="form-control" id="group" name="group" required>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Inventory Modal -->
+<div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editInventoryModalLabel">Edit Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editInventoryForm">
+                    <input type="hidden" id="editInventoryId" name="inventoryId">
+                    <div class="mb-3">
+                        <label for="editGenericName" class="form-label">Generic Name</label>
+                        <input type="text" class="form-control" id="editGenericName" name="genericName" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBrandName" class="form-label">Brand Name</label>
+                        <input type="text" class="form-control" id="editBrandName" name="brandName" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editMilligram" class="form-label">Milligram</label>
+                        <input type="text" class="form-control" id="editMilligram" name="milligram" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDosageForm" class="form-label">Dosage</label>
+                        <input type="text" class="form-control" id="editDosageForm" name="dosageForm" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editQuantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="editQuantity" name="quantity" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editPrice" class="form-label">Price</label>
+                        <input type="number" step="0.01" class="form-control" id="editPrice" name="price" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGroup" class="form-label">Group</label>
+                        <input type="text" class="form-control" id="editGroup" name="group" disabled>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Inventory Modal -->
+<div class="modal fade" id="deleteInventoryModal" tabindex="-1" aria-labelledby="deleteInventoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteInventoryModalLabel">Delete Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item?</p>
+                <form id="deleteInventoryForm">
+                    <input type="hidden" id="deleteInventoryId" name="inventoryId">
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     /* Custom card styles */
