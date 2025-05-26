@@ -54,6 +54,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
   }
   header("Location: staff.php");
   exit();
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+if ($search != '') {
+    $searchSafe = mysqli_real_escape_string($conn, $search);
+    $query = "SELECT staff_name, staff_id, email, shifts FROM staff WHERE staff_name LIKE '%$searchSafe%' OR email LIKE '%$searchSafe%'";
+} else {
+    $query = "SELECT staff_name, staff_id, email, shifts FROM staff";
+}
+$result = mysqli_query($conn, $query);
 }
 
 // Handle delete staff

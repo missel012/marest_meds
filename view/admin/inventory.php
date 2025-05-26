@@ -5,16 +5,29 @@ ini_set('display_errors', 1);
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
-include("../../dB/config.php"); // Ensure this file contains your database connection
+include("../../dB/config.php");
 
-// Fetch inventory items grouped by category
-$query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
-$result = mysqli_query($conn, $query);
-
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $inventory = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $group = ucfirst($row['group']);
-    $inventory[$group][] = $row;
+
+if ($search != '') {
+    $searchSafe = mysqli_real_escape_string($conn, $search);
+    $query = "SELECT * FROM inventory WHERE genericName LIKE '%$searchSafe%' OR brandName LIKE '%$searchSafe%'";
+    $result = mysqli_query($conn, $query);
+    
+    // Flatten all results into one group (e.g., "Search Result")
+    $inventory['Search Result'] = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $inventory['Search Result'][] = $row;
+    }
+} else {
+    $query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
+    $result = mysqli_query($conn, $query);
+    
+    while ($row = mysqli_fetch_assoc($result)) {
+        $group = ucfirst($row['group']);
+        $inventory[$group][] = $row;
+    }
 }
 ?>
 
