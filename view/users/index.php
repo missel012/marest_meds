@@ -107,7 +107,7 @@ while ($row = mysqli_fetch_assoc($result)) {
         </div>
         <h6 class="mt-3">Orders This Day</h6>
         <h2><?php echo $orders_today; ?></h2>
-        <a href="prescriptionOrders.php" class="btn btn-custom mt-3">View Orders <i class="bi bi-chevron-right"></i></a>
+        <a href="orders_prescription.php" class="btn btn-custom mt-3">View Orders <i class="bi bi-chevron-right"></i></a>
       </div>
     </div>
   </div>
