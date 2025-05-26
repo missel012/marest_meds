@@ -108,12 +108,12 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'deleteOrder') {
   header('Content-Type: application/json');
-  
+
   $orderId = isset($_POST['orderId']) ? intval($_POST['orderId']) : 0;
 
   if ($orderId <= 0) {
-      echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
-      exit;
+    echo json_encode(['success' => false, 'message' => 'Invalid order ID.']);
+    exit;
   }
 
   // Delete rows from order_items and order tables
@@ -123,28 +123,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
   $response = ['success' => false, 'message' => ''];
 
   try {
-      $stmt1 = $conn->prepare($deleteItemsQuery);
-      $stmt2 = $conn->prepare($deleteOrderQuery);
+    $stmt1 = $conn->prepare($deleteItemsQuery);
+    $stmt2 = $conn->prepare($deleteOrderQuery);
 
-      if ($stmt1 && $stmt2) {
-          $stmt1->bind_param("i", $orderId);
-          $stmt2->bind_param("i", $orderId);
+    if ($stmt1 && $stmt2) {
+      $stmt1->bind_param("i", $orderId);
+      $stmt2->bind_param("i", $orderId);
 
-          $success = $stmt1->execute() && $stmt2->execute();
-          
-          if ($success) {
-              $response = ['success' => true, 'message' => 'Order and related items deleted successfully.'];
-          } else {
-              $response = ['success' => false, 'message' => 'Database error: ' . $conn->error];
-          }
+      $success = $stmt1->execute() && $stmt2->execute();
 
-          $stmt1->close();
-          $stmt2->close();
+      if ($success) {
+        $response = ['success' => true, 'message' => 'Order and related items deleted successfully.'];
       } else {
-          $response = ['success' => false, 'message' => 'Failed to prepare statements.'];
+        $response = ['success' => false, 'message' => 'Database error: ' . $conn->error];
       }
+
+      $stmt1->close();
+      $stmt2->close();
+    } else {
+      $response = ['success' => false, 'message' => 'Failed to prepare statements.'];
+    }
   } catch (Exception $e) {
-      $response = ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
+    $response = ['success' => false, 'message' => 'Error: ' . $e->getMessage()];
   }
 
   echo json_encode($response);
@@ -900,23 +900,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
       .then(data => {
         if (data.success) {
           Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'success',
-            title: 'Order Successful',
-            text: 'Your order has been placed successfully!',
+            title: 'Order placed successfully!',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
           });
         } else {
           Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'error',
-            title: 'Order Unsuccessful',
-            text: 'There was an error placing your order. Please try again.',
+            title: 'Error placing order!',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
           });
         }
       })
       .catch(error => {
         Swal.fire({
+          toast: true,
+          position: 'top-end',
           icon: 'error',
-          title: 'Order Unsuccessful',
-          text: 'There was an error placing your order. Please try again.',
+          title: 'Error placing order!',
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
         });
         console.error('Error:', error);
       });
@@ -1033,41 +1045,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     fetch('prescription_orders.php', {
         method: 'POST',
         body: formData
-    })
-    .then(response => {
+      })
+      .then(response => {
         if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(text || 'Network response was not ok');
-            });
+          return response.text().then(text => {
+            throw new Error(text || 'Network response was not ok');
+          });
         }
         return response.json();
-    })
-    .then(data => {
+      })
+      .then(data => {
         if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Order Deleted',
-                text: 'The order has been deleted successfully!',
-            }).then(() => {
-                location.reload();
-            });
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Order deleted successfully!',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          }).then(() => {
+            location.reload();
+          });
         } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Delete Failed',
-                text: data.message || 'Failed to delete order',
-            });
-        }
-    })
-    .catch(error => {
-        Swal.fire({
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'error',
-            title: 'Delete Failed',
-            text: 'An error occurred: ' + error.message,
+            title: data.message || 'Failed to delete order',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+          });
+        }
+      })
+      .catch(error => {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'An error occurred: ' + error.message,
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
         });
         console.error('Error:', error);
-    });
-});
+      });
+  });
 
   document.addEventListener('DOMContentLoaded', function() {
     const deleteOrderModal = document.getElementById('deleteOrderModal');

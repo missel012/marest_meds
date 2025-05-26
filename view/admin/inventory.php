@@ -14,7 +14,7 @@ if ($search != '') {
     $searchSafe = mysqli_real_escape_string($conn, $search);
     $query = "SELECT * FROM inventory WHERE genericName LIKE '%$searchSafe%' OR brandName LIKE '%$searchSafe%'";
     $result = mysqli_query($conn, $query);
-    
+
     // Flatten all results into one group (e.g., "Search Result")
     $inventory['Search Result'] = [];
     while ($row = mysqli_fetch_assoc($result)) {
@@ -23,7 +23,7 @@ if ($search != '') {
 } else {
     $query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
     $result = mysqli_query($conn, $query);
-    
+
     while ($row = mysqli_fetch_assoc($result)) {
         $group = ucfirst($row['group']);
         $inventory[$group][] = $row;
@@ -217,7 +217,7 @@ if ($search != '') {
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.getElementById('group').addEventListener('change', function () {
+    document.getElementById('group').addEventListener('change', function() {
         const otherGroupInput = document.getElementById('otherGroup');
         if (this.value === 'other') {
             otherGroupInput.classList.remove('d-none');
@@ -228,7 +228,7 @@ if ($search != '') {
         }
     });
 
-    document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('addInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
         if (document.getElementById('group').value === 'other') {
@@ -236,114 +236,148 @@ if ($search != '') {
         }
 
         fetch('add_inventory.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Inventory item added!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error adding item!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Add Successful',
-                    text: 'The inventory item has been added successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Add Unsuccessful',
-                    text: 'There was an error adding the inventory item. Please try again.',
+                    title: 'Error adding item!',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Add Unsuccessful',
-                text: 'There was an error adding the inventory item. Please try again.',
+                console.error('Error:', error);
             });
-            console.error('Error:', error);
-        });
     });
 
-    document.getElementById('editInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('editInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
 
         fetch('edit_inventory.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Inventory item updated!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error updating item!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Edit Successful',
-                    text: 'The inventory item has been updated successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Edit Unsuccessful',
-                    text: 'There was an error updating the inventory item. Please try again.',
+                    title: 'Error updating item!',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Edit Unsuccessful',
-                text: 'There was an error updating the inventory item. Please try again.',
+                console.error('Error:', error);
             });
-            console.error('Error:', error);
-        });
     });
 
-    document.getElementById('deleteInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('deleteInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
 
         fetch('delete_inventory.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Inventory item deleted!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error deleting item!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Delete Successful',
-                    text: 'The inventory item has been deleted successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Delete Unsuccessful',
-                    text: 'There was an error deleting the inventory item. Please try again.',
+                    title: 'Error deleting item!',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Delete Unsuccessful',
-                text: 'There was an error deleting the inventory item. Please try again.',
+                console.error('Error:', error);
             });
-            console.error('Error:', error);
-        });
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const editInventoryModal = document.getElementById('editInventoryModal');
         const deleteInventoryModal = document.getElementById('deleteInventoryModal');
 
-        editInventoryModal.addEventListener('show.bs.modal', function (event) {
+        editInventoryModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
 
@@ -362,7 +396,7 @@ if ($search != '') {
                 .catch(error => console.error('Error:', error));
         });
 
-        deleteInventoryModal.addEventListener('show.bs.modal', function (event) {
+        deleteInventoryModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
             document.getElementById('deleteInventoryId').value = inventoryId;
@@ -410,7 +444,8 @@ if ($search != '') {
     }
 
     .btn-primary {
-        background-color: #6ccf54 !important; /* Save button color */
+        background-color: #6ccf54 !important;
+        /* Save button color */
         border-color: #6ccf54 !important;
     }
 
@@ -420,7 +455,8 @@ if ($search != '') {
     }
 
     .btn-secondary {
-        background-color: #db5c79 !important; /* Close button color */
+        background-color: #db5c79 !important;
+        /* Close button color */
         border-color: #db5c79 !important;
     }
 
@@ -431,6 +467,7 @@ if ($search != '') {
 
     /* Make modal wider */
     .modal-dialog {
-        max-width: 800px !important; /* Adjust width as needed */
+        max-width: 800px !important;
+        /* Adjust width as needed */
     }
 </style>
