@@ -100,16 +100,16 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
                                         <div class="col-lg-4">
                                             <button type="button" class="btn custom-card mt-2 mb-2"
                                                 onclick="showDrugDetails(
-        '<?php echo base64_encode($item['image']); ?>',
-        '<?php echo htmlspecialchars($item['genericName']); ?>',
-        '<?php echo htmlspecialchars($item['brandName']); ?>',
-        '<?php echo $item['milligram']; ?>',
-        '<?php echo htmlspecialchars($item['dosageForm']); ?>',
-        '<?php echo htmlspecialchars($item['group']); ?>',
-        '<?php echo $item['quantity']; ?>',
-        '<?php echo number_format($item['price'], 2); ?>',
-        '<?php echo $item['inventoryId']; ?>' 
-    )">
+                                                    '<?php echo base64_encode($item['image']); ?>',
+                                                    '<?php echo htmlspecialchars($item['genericName']); ?>',
+                                                    '<?php echo htmlspecialchars($item['brandName']); ?>',
+                                                    '<?php echo $item['milligram']; ?>',
+                                                    '<?php echo htmlspecialchars($item['dosageForm']); ?>',
+                                                    '<?php echo htmlspecialchars($item['group']); ?>',
+                                                    '<?php echo $item['quantity']; ?>',
+                                                    '<?php echo number_format($item['price'], 2); ?>',
+                                                    '<?php echo $item['inventoryId']; ?>' 
+                                                )">
                                                 <div class="card-body text-center" style="font-size: 0.875rem;">
                                                     <!-- Image on top -->
                                                     <img src="data:image/jpeg;base64,<?php echo base64_encode($item['image']); ?>"
