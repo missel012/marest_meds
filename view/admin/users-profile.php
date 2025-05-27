@@ -320,19 +320,18 @@ Swal.fire({
             <div class="tab-pane fade profile-edit pt-3" id="profile-edit">
               <!-- Profile Edit Form -->
               <form method="POST" enctype="multipart/form-data">
-                <div class="row mb-3">
-                  <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
-                  <div class="col-md-8 col-lg-9">
-                    <div class="d-flex justify-content-center">
-                      <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>"
-                        alt="Profile"
-                        class="shadow">
-                    </div>
-                    <div class="pt-2">
-                      <input type="file" name="profilePicture" class="form-control">
-                    </div>
-                  </div>
-                </div>
+<div class="row mb-3">
+  <label for="profilePicture" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Profile Image</label>
+  <div class="col-md-8 col-lg-9 text-center">
+    <div style="width: 130px; height: 130px; margin: 0 auto 15px; overflow: hidden; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+      <img id="previewImage"
+        src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : '../../assets/img/default-user.png' ?>" 
+        alt="Profile Picture"
+        style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+    <input type="file" name="profilePicture" id="profilePictureInput" class="form-control mt-2">
+  </div>
+</div>
                 <div class="row mb-3">
                   <label for="firstName" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">First Name</label>
                   <div class="col-md-8 col-lg-9">
@@ -411,6 +410,19 @@ Swal.fire({
     </div>
   </div>
 </section>
+<script>
+  document.getElementById('profilePictureInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('previewImage').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
 
 <?php
 include("./includes/footer.php");
