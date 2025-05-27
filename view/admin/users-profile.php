@@ -63,6 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
   $phoneNumber = $_POST['phoneNumber'];
   $email = $_POST['email'];
 
+  // Get userId using email
+  $getIdQuery = "SELECT userId FROM users WHERE email = ?";
+  $idStmt = $conn->prepare($getIdQuery);
+  $idStmt->bind_param("s", $email);
+  $idStmt->execute();
+  $idResult = $idStmt->get_result();
+  $idRow = $idResult->fetch_assoc();
+  $userId = $idRow['userId'];
+
   // Handle profile picture upload
   if (isset($_FILES['profilePicture']) && $_FILES['profilePicture']['error'] === UPLOAD_ERR_OK) {
     $fileName = basename($_FILES['profilePicture']['name']);
@@ -71,21 +80,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
     if (move_uploaded_file($_FILES['profilePicture']['tmp_name'], $targetFilePath)) {
       $profilePicture = $targetFilePath;
     } else {
-      $profilePicture = $user['profilePicture']; // Keep the old picture if upload fails
+      $profilePicture = $user['profilePicture'];
       echo "<script>
-Swal.fire({
-  toast: true,
-  position: 'top-end',
-  icon: 'error',
-  title: 'Failed to upload profile picture.',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true
-});
-</script>";
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Failed to upload profile picture.',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+      </script>";
     }
   } else {
-    $profilePicture = $user['profilePicture']; // Keep the old picture if no new picture is uploaded
+    $profilePicture = $user['profilePicture'];
   }
 
   // Update user details in the database
@@ -94,31 +103,40 @@ Swal.fire({
   $stmt->bind_param("sssssssi", $firstName, $lastName, $birthday, $gender, $phoneNumber, $email, $profilePicture, $userId);
 
   if ($stmt->execute()) {
+    // Update session with new values
+    $_SESSION['firstName'] = $firstName;
+    $_SESSION['lastName'] = $lastName;
+    $_SESSION['email'] = $email;
+    $_SESSION['birthday'] = $birthday;
+    $_SESSION['gender'] = $gender;
+    $_SESSION['phoneNumber'] = $phoneNumber;
+    $_SESSION['profilePicture'] = $profilePicture;
+
     echo "<script>
-Swal.fire({
-  toast: true,
-  position: 'top-end',
-  icon: 'success',
-  title: 'Profile updated successfully.',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true
-}).then(() => {
-  window.location = 'users-profile.php';
-});
-</script>";
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Profile updated successfully.',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    }).then(() => {
+      window.location = 'users-profile.php';
+    });
+    </script>";
   } else {
     echo "<script>
-Swal.fire({
-  toast: true,
-  position: 'top-end',
-  icon: 'error',
-  title: 'Error updating profile. Please try again.',
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true
-});
-</script>";
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Error updating profile. Please try again.',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+    </script>";
   }
 }
 
