@@ -61,6 +61,7 @@ if ($search != '') {
                                 <th scope="col">Dosage Form</th>
                                 <th scope="col">Quantity</th>
                                 <th scope="col">Price</th>
+                                <th scope="col">Image</th>
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
@@ -73,6 +74,16 @@ if ($search != '') {
                                     <td><?= htmlspecialchars($item['dosageForm']) ?></td>
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
+                                    <td>
+                                        <?php if (!empty($item['image'])): ?>
+                                            <img src="data:image/jpeg;base64,<?php echo base64_encode($item['image']); ?>"
+                                                 alt="Product Image"
+                                                 class="img-fluid mb-2"
+                                                 style="width: 50px; height: 50px; object-fit: cover;" />
+                                        <?php else: ?>
+                                            <span class="text-muted">No Image</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
                                         <a href="#" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-trash"></i></a>
@@ -96,7 +107,7 @@ if ($search != '') {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addInventoryForm">
+                <form id="addInventoryForm" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="genericName" class="form-label">Generic Name</label>
                         <input type="text" class="form-control" id="genericName" name="genericName" required>
@@ -110,7 +121,7 @@ if ($search != '') {
                         <input type="number" class="form-control" id="milligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
-                        <label for="dosageForm" class="form-label">Dosage</label>
+                        <label for="dosageForm" class="form-label">Dosage Form</label>
                         <input type="text" class="form-control" id="dosageForm" name="dosageForm" required>
                     </div>
                     <div class="mb-3">
@@ -134,6 +145,11 @@ if ($search != '') {
                         </select>
                         <input type="text" class="form-control mt-2 d-none" id="otherGroup" name="otherGroup" placeholder="Please specify">
                     </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" onchange="previewAddImage(event)">
+                        <div id="addImagePreview" class="mt-2"></div>
+                    </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Add</button>
@@ -143,6 +159,19 @@ if ($search != '') {
         </div>
     </div>
 </div>
+<script>
+function previewAddImage(event) {
+    const preview = document.getElementById('addImagePreview');
+    preview.innerHTML = '';
+    if (event.target.files && event.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:50px;height:50px;object-fit:cover;">`;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+}
+</script>
 
 <!-- Edit Inventory Modal -->
 <div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
@@ -153,7 +182,7 @@ if ($search != '') {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editInventoryForm">
+                <form id="editInventoryForm" enctype="multipart/form-data">
                     <input type="hidden" id="editInventoryId" name="inventoryId">
                     <div class="mb-3">
                         <label for="editGenericName" class="form-label">Generic Name</label>
@@ -168,7 +197,7 @@ if ($search != '') {
                         <input type="number" class="form-control" id="editMilligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editDosageForm" class="form-label">Dosage</label>
+                        <label for="editDosageForm" class="form-label">Dosage Form</label>
                         <input type="text" class="form-control" id="editDosageForm" name="dosageForm" required>
                     </div>
                     <div class="mb-3">
@@ -182,6 +211,11 @@ if ($search != '') {
                     <div class="mb-3">
                         <label for="editGroup" class="form-label">Group</label>
                         <input type="text" class="form-control" id="editGroup" name="group" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editImage" class="form-label">Image</label>
+                        <input type="file" class="form-control" id="editImage" name="image" accept="image/*">
+                        <div id="currentImagePreview" class="mt-2"></div>
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -239,8 +273,21 @@ if ($search != '') {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => response.clone().json().catch(() => response.text()))
             .then(data => {
+                if (typeof data === 'string') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error adding item!',
+                        text: 'Server returned invalid JSON:\n' + data,
+                        showConfirmButton: true,
+                        timer: 10000,
+                        timerProgressBar: true
+                    });
+                    return;
+                }
                 if (data.success) {
                     Swal.fire({
                         toast: true,
@@ -251,14 +298,20 @@ if ($search != '') {
                         timer: 3000,
                         timerProgressBar: true
                     });
+                    setTimeout(function() {
+                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addInventoryModal'));
+                        if (addModal) addModal.hide();
+                        location.reload();
+                    }, 3000);
                 } else {
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
                         icon: 'error',
                         title: 'Error adding item!',
-                        showConfirmButton: false,
-                        timer: 3000,
+                        text: (data.error ? data.error : '') + (data.log ? "\n" + data.log : ''),
+                        showConfirmButton: true,
+                        timer: 10000,
                         timerProgressBar: true
                     });
                 }
@@ -269,8 +322,9 @@ if ($search != '') {
                     position: 'top-end',
                     icon: 'error',
                     title: 'Error adding item!',
-                    showConfirmButton: false,
-                    timer: 3000,
+                    text: error,
+                    showConfirmButton: true,
+                    timer: 10000,
                     timerProgressBar: true
                 });
                 console.error('Error:', error);
@@ -296,9 +350,12 @@ if ($search != '') {
                         showConfirmButton: false,
                         timer: 3000,
                         timerProgressBar: true
-                    }).then(() => {
-                        location.reload();
                     });
+                    setTimeout(function() {
+                        var editModal = bootstrap.Modal.getInstance(document.getElementById('editInventoryModal'));
+                        if (editModal) editModal.hide();
+                        location.reload();
+                    }, 3000);
                 } else {
                     Swal.fire({
                         toast: true,
@@ -392,6 +449,12 @@ if ($search != '') {
                     document.getElementById('editQuantity').value = data.quantity;
                     document.getElementById('editPrice').value = data.price;
                     document.getElementById('editGroup').value = data.group;
+                    // Show current image preview if available (image is in database as filename)
+                    if (data.image) {
+                        document.getElementById('currentImagePreview').innerHTML = `<img src="../../uploads/${data.image}" alt="Current Image" style="width:50px;height:50px;object-fit:cover;">`;
+                    } else {
+                        document.getElementById('currentImagePreview').innerHTML = `<span class="text-muted">No Image</span>`;
+                    }
                 })
                 .catch(error => console.error('Error:', error));
         });
@@ -401,7 +464,7 @@ if ($search != '') {
             const inventoryId = button.getAttribute('data-id');
             document.getElementById('deleteInventoryId').value = inventoryId;
         });
-    });
+    }); 
 </script>
 
 <?php include("./includes/footer.php"); ?>
