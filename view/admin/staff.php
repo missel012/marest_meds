@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
       mysqli_query($conn, $insert_query);
 
       // Update the role in the users table
-      $user_role = ($role === 'admin') ? 'admin' : 'user';
+      $user_role = ($role === 'admin') ? 'admin' : 'staff';
       $update_user_query = "UPDATE users SET role = '$user_role' WHERE email = '$email'";
       mysqli_query($conn, $update_user_query);
 
@@ -67,8 +67,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
 // Handle delete staff
 if (isset($_GET['delete_id'])) {
   $delete_id = $_GET['delete_id'];
+
+  // Get the email of the staff to be deleted
+  $get_email_query = "SELECT email FROM staff WHERE staff_id = '$delete_id'";
+  $get_email_result = mysqli_query($conn, $get_email_query);
+  $staff_email = '';
+  if ($get_email_result && mysqli_num_rows($get_email_result) > 0) {
+    $row = mysqli_fetch_assoc($get_email_result);
+    $staff_email = $row['email'];
+  }
+
+  // Delete staff from staff table
   $delete_query = "DELETE FROM staff WHERE staff_id = '$delete_id'";
-  if (mysqli_query($conn, $delete_query)) {
+  $delete_result = mysqli_query($conn, $delete_query);
+
+  // If deleted, update user role to 'user'
+  if ($delete_result && $staff_email) {
+    $update_role_query = "UPDATE users SET role = 'user' WHERE email = '$staff_email'";
+    mysqli_query($conn, $update_role_query);
     $_SESSION['message'] = "Staff deleted successfully.";
     $_SESSION['code'] = "success";
   } else {
@@ -91,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignRole'])) {
 
   if ($stmt->execute()) {
     // Update the role in the users table
-    $userRole = ($role === 'admin') ? 'admin' : 'user';
+    $userRole = ($role === 'admin') ? 'admin' : 'staff';
     $updateUserQuery = "UPDATE users SET role = ? WHERE email = ?";
     $stmtUser = $conn->prepare($updateUserQuery);
     $stmtUser->bind_param("ss", $userRole, $email);
@@ -125,13 +141,17 @@ if ($current_hour >= 8 && $current_hour < 12) {
   $current_shift = 'None';
 }
 
-// Fetch staff data from the database
+// Fetch users with role 'user' only for add staff dropdown
+$unassigned_users_query = "SELECT firstName, lastName, email FROM users WHERE role = 'user'";
+$unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
+
+// Fetch staff with role 'staff' for the table
+// $query = "SELECT staff_name, staff_id, email, shifts FROM staff WHERE email IN (SELECT email FROM users WHERE role = 'staff')";
+// $result = mysqli_query($conn, $query);
+
+// Show all staff regardless of user role
 $query = "SELECT staff_name, staff_id, email, shifts FROM staff";
 $result = mysqli_query($conn, $query);
-
-// Fetch users without assigned roles
-$unassigned_users_query = "SELECT firstName, lastName, email FROM users WHERE role IS NULL OR role = ''";
-$unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
 ?>
 
 
@@ -187,7 +207,7 @@ $unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
                   echo "<td>" . $status_icon . "</td>";
                   echo '<td>
                           <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
-                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
+                          <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteStaffModal" data-staff-id="' . $row['staff_id'] . '"><i class="bi bi-trash"></i></button>
                         </td>';
                   echo "</tr>";
                 }
@@ -283,6 +303,25 @@ $unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
   </div>
 </div>
 
+<!-- Delete Staff Modal -->
+<div class="modal fade" id="deleteStaffModal" tabindex="-1" aria-labelledby="deleteStaffModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteStaffModalLabel">Confirm Delete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this staff?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <a href="#" id="confirmDeleteStaffBtn" class="btn btn-danger">Delete</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <?php
 include("./includes/footer.php");
 ob_end_flush(); // Flush the output buffer
@@ -340,81 +379,40 @@ ob_end_flush(); // Flush the output buffer
       }
     });
   });
+
+  // Attach event to set staff id on modal
+  const deleteStaffModal = document.getElementById('deleteStaffModal');
+  deleteStaffModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const staffId = button.getAttribute('data-staff-id');
+    const confirmDeleteBtn = deleteStaffModal.querySelector('#confirmDeleteStaffBtn');
+    confirmDeleteBtn.href = 'staff.php?delete_id=' + staffId;
+  });
+
+  // Add search feature for user dropdown in Add Staff Modal
+  document.addEventListener("DOMContentLoaded", function() {
+    const select = document.getElementById('staff_name_email');
+    if (select) {
+      // Create a search input above the select
+      const searchInput = document.createElement('input');
+      searchInput.type = 'text';
+      searchInput.className = 'form-control mb-2';
+      searchInput.placeholder = 'Type to search user...';
+      select.parentNode.insertBefore(searchInput, select);
+
+      searchInput.addEventListener('keyup', function() {
+        const filter = searchInput.value.toLowerCase();
+        for (let i = 0; i < select.options.length; i++) {
+          const option = select.options[i];
+          if (i === 0) continue; // Skip the "Select Staff" option
+          const text = option.text.toLowerCase();
+          option.style.display = text.includes(filter) ? '' : 'none';
+        }
+        // Optionally, reset selection if filtered out
+        if (select.selectedIndex > 0 && select.options[select.selectedIndex].style.display === 'none') {
+          select.selectedIndex = 0;
+        }
+      });
+    }
+  });
 </script>
-
-<style>
-  .highlight {
-    background-color: #FFD700 !important;
-  }
-
-  .table-striped tbody tr:nth-of-type(odd) {
-    background-color: #6CCF54 !important;
-  }
-
-  .table-striped tbody tr:nth-of-type(even) {
-    background-color: #A3E4A7;
-  }
-
-  /* Badge */
-  .badge-custom {
-    background-color: #6ccf54;
-  }
-
-  /* Button */
-  .btn-custom {
-    background-color: #db5c79;
-    border-color: #db5c79;
-    color: #fff;
-  }
-
-  .btn-custom:hover {
-    background-color: #c04a67;
-    border-color: #c04a67;
-  }
-
-  /* Modal Form */
-  .modal-body {
-    max-height: 400px;
-    overflow-y: auto;
-  }
-
-  .modal-header {
-    border-bottom: none;
-  }
-
-  .modal-title {
-    font-weight: bold;
-  }
-
-  .form-label {
-    font-weight: bold;
-  }
-
-  .btn-primary {
-    background-color: #6ccf54 !important;
-    /* Save button color */
-    border-color: #6ccf54 !important;
-  }
-
-  .btn-primary:hover {
-    background-color: #5ab94a !important;
-    border-color: #5ab94a !important;
-  }
-
-  .btn-secondary {
-    background-color: #db5c79 !important;
-    /* Close button color */
-    border-color: #db5c79 !important;
-  }
-
-  .btn-secondary:hover {
-    background-color: #c04a67 !important;
-    border-color: #c04a67 !important;
-  }
-
-  /* Make modal wider */
-  .modal-dialog {
-    max-width: 800px !important;
-    /* Adjust width as needed */
-  }
-</style>

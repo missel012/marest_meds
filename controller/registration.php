@@ -11,6 +11,7 @@ if (isset($_POST['registration'])) {
     $phoneNumber = $_POST['phoneNumber'];
     $gender = $_POST['gender'];
     $birthday = $_POST['birthday'];
+    $role = isset($_POST['role']) ? $_POST['role'] : 'user';
 
     // Validate if confirm password and password match
     if ($password != $cpassword) {
@@ -32,18 +33,20 @@ if (isset($_POST['registration'])) {
     }
 
     // Insert user data into the database
-    $query = "INSERT INTO `users`(`firstName`, `lastName`, `email`, `password`, `phoneNumber`, `gender`, `birthday`) 
-              VALUES ('$firstName','$lastName','$email','$password','$phoneNumber','$gender','$birthday')";
+    $insert_query = "INSERT INTO users (firstName, lastName, email, password, phoneNumber, gender, birthday, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $stmt = $conn->prepare($insert_query);
+    $stmt->bind_param("ssssssss", $firstName, $lastName, $email, $password, $phoneNumber, $gender, $birthday, $role);
 
-    if (mysqli_query($conn, $query)) {
+    if ($stmt->execute()) {
         $_SESSION['message'] = "Registered Successfully";
         $_SESSION['code'] = "success";
         header("location:../login.php");
         exit(0);
     } else {
-        echo "Error: " . mysqli_error($conn);
+        echo "Error: " . $stmt->error;
     }
 
-    mysqli_close($conn);
+    $stmt->close();
+    $conn->close();
 }
 ?>

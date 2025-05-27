@@ -38,14 +38,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
   // Update staff details in the staff table
   $update_staff_query = "UPDATE staff SET staff_name = '$staff_name', email = '$email', shifts = '$shifts' WHERE staff_id = '$staff_id'";
-  mysqli_query($conn, $update_staff_query);
+  $staff_result = mysqli_query($conn, $update_staff_query);
 
   // Update the role in the users table
   $update_role_query = "UPDATE users SET role = '$role' WHERE email = '$email'";
-  mysqli_query($conn, $update_role_query);
+  $role_result = mysqli_query($conn, $update_role_query);
 
-  header("Location: staff.php");
-  exit(); // Ensure no further code is executed after the redirect
+  echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+  if ($staff_result && $role_result) {
+    echo "<script>
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Staff details updated successfully!',
+        showConfirmButton: false,
+        timer: 1500, // Faster disappear
+        timerProgressBar: true
+      }).then(() => {
+        window.location.href = 'staff.php';
+      });
+    </script>";
+    exit();
+  } else {
+    echo "<script>
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Failed to update staff details.',
+        showConfirmButton: false,
+        timer: 1500, // Faster disappear
+        timerProgressBar: true
+      });
+    </script>";
+  }
 }
 
 if (isset($_POST['edit_staff'])) {

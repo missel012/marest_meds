@@ -163,7 +163,7 @@
                 </div>
                 </div>
 
-          
+                    <input type="hidden" name="role" value="user">
 
                   
                     <div class="col-12">

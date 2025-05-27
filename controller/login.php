@@ -16,13 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
 
-        // Check if the role is null or empty
-        if (empty($user['role'])) {
-            $_SESSION['message'] = "Please wait for your admin to add your account.";
-            $_SESSION['code'] = "info";
-            header("Location: ../login.php");
-            exit();
-        }
 
         // Verify the password (hashed or plain-text)
         if (password_verify($password, $user['password']) || $password === $user['password']) {
@@ -38,6 +31,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: ../view/admin/index.php");
             } elseif ($user['role'] === 'user') {
                 header("Location: ../view/users/index.php");
+            } elseif ($user['role'] === 'staff') {
+                header("Location: ../view/staff/index.php");
             } elseif ($user['role'] === 'customer') {
                 header("Location: ../view/customer/index.php");
             } else {

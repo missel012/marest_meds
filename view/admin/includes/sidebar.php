@@ -292,6 +292,9 @@ if (isset($_SESSION['email'])) {
     height: 50px;
     border-radius: 50%;
     margin-right: 15px;
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+    border: 2px solid #e0e0e0; /* Optional: subtle border for better appearance */
+    background: #fff; /* Optional: fallback background */
   }
 
   .profile-info-sidebar h4 {
