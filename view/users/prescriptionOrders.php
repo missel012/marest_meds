@@ -502,23 +502,35 @@ include("./includes/footer.php");
             .then(data => {
                 if (data.success) {
                     Swal.fire({
+                        toast: true,
+                        position: 'top-end',
                         icon: 'success',
-                        title: 'Order Successful',
-                        text: 'Your order has been placed successfully!',
+                        title: 'Your order has been placed successfully!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
                     });
                 } else {
                     Swal.fire({
+                        toast: true,
+                        position: 'top-end',
                         icon: 'error',
-                        title: 'Order Unsuccessful',
-                        text: 'There was an error placing your order. Please try again.',
+                        title: 'There was an error placing your order. Please try again.',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
                     });
                 }
             })
             .catch(error => {
                 Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Order Unsuccessful',
-                    text: 'There was an error placing your order. Please try again.',
+                    title: 'There was an error placing your order. Please try again.',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
                 console.error('Error:', error);
             });

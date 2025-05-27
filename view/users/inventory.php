@@ -192,93 +192,105 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('addInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
 
         fetch('add_inventory.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error adding item: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error adding item: ' + error.message);
-        });
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error adding item: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding item: ' + error.message);
+            });
     });
 
-    document.getElementById('editInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('editInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData();
         formData.append('inventoryId', document.getElementById('editInventoryId').value);
         formData.append('quantity', document.getElementById('editQuantity').value);
 
         fetch('edit_inventory.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Edit Successful: The inventory item has been updated successfully!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Edit Unsuccessful: There was an error updating the inventory item.',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Edit Successful',
-                    text: 'The inventory item has been updated successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Edit Unsuccessful',
-                    text: 'There was an error updating the inventory item. Please try again.',
+                    title: 'Edit Unsuccessful: There was an error updating the inventory item.',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Edit Unsuccessful',
-                text: 'There was an error updating the inventory item. Please try again.',
+                console.error('Error:', error);
             });
-            console.error('Error:', error);
-        });
     });
 
-    document.getElementById('deleteInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('deleteInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
 
         fetch('delete_inventory.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Error deleting item: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error deleting item: ' + error.message);
-        });
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting item: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting item: ' + error.message);
+            });
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const editInventoryModal = document.getElementById('editInventoryModal');
         const deleteInventoryModal = document.getElementById('deleteInventoryModal');
 
-        editInventoryModal.addEventListener('show.bs.modal', function (event) {
+        editInventoryModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
 
@@ -297,7 +309,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                 .catch(error => console.error('Error:', error));
         });
 
-        deleteInventoryModal.addEventListener('show.bs.modal', function (event) {
+        deleteInventoryModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
             document.getElementById('deleteInventoryId').value = inventoryId;
