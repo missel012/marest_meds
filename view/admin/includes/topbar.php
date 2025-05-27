@@ -47,11 +47,22 @@ $role = $_SESSION['role'] === 'user' ? 'Staff' : ucfirst($_SESSION['role']);
 </div><!-- End Logo -->
 
 <div class="search-bar align-middle" style="display: flex; align-items: center; height: 100%;">
-  <form class="search-form d-flex align-items-center" method="POST" action="#">
-    <input type="text" name="query" placeholder="Search" title="Enter search keyword">
-    <button type="submit" title="Search"><i class="bi bi-search"></i></button>
+  <form class="search-form d-flex align-items-center" method="GET" action="search_results.php">
+    <input 
+      type="text" 
+      name="query" 
+      placeholder="Search" 
+      title="Enter search keyword" 
+      class="form-control me-2"
+      value="<?= isset($_GET['query']) ? htmlspecialchars($_GET['query']) : '' ?>"
+      style="width: 250px; border-radius: 6px;" 
+      required
+    >
+    <button type="submit" title="Search" class="btn btn-success">
+      <i class="bi bi-search"></i>
+    </button>
   </form>
-</div><!-- End Search Bar --> 
+</div><!-- End Search Bar -->
 
 <nav class="header-nav ms-auto">
   <ul class="d-flex align-items-center">

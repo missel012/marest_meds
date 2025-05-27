@@ -1,7 +1,7 @@
 <?php
 // Ensure the session is started
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+  session_start();
 }
 
 // Include SweetAlert library in the header
@@ -14,158 +14,216 @@ include("../../dB/config.php"); // Ensure this file contains your database conne
 
 // Fetch user data from the database using the email stored in the session
 if (isset($_SESSION['email'])) {
-    $email = $_SESSION['email'];
-    $query = "SELECT firstName, lastName, email, profilePicture, birthday, gender, phoneNumber, role FROM users WHERE email = ?";
-    $stmt = $conn->prepare($query);
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $user = $result->fetch_assoc();
+  $email = $_SESSION['email'];
+  $query = "SELECT firstName, lastName, email, profilePicture, birthday, gender, phoneNumber, role FROM users WHERE email = ?";
+  $stmt = $conn->prepare($query);
+  $stmt->bind_param("s", $email);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $user = $result->fetch_assoc();
 
-    // Update session variables with user data
-    $_SESSION['firstName'] = $user['firstName'];
-    $_SESSION['lastName'] = $user['lastName'];
-    $_SESSION['email'] = $user['email'];
-    $_SESSION['profilePicture'] = $user['profilePicture'];
-    $_SESSION['birthday'] = $user['birthday'];
-    $_SESSION['gender'] = $user['gender'];
-    $_SESSION['phoneNumber'] = $user['phoneNumber'];
-    $_SESSION['role'] = $user['role'];
+  // Update session variables with user data
+  $_SESSION['firstName'] = $user['firstName'];
+  $_SESSION['lastName'] = $user['lastName'];
+  $_SESSION['email'] = $user['email'];
+  $_SESSION['profilePicture'] = $user['profilePicture'];
+  $_SESSION['birthday'] = $user['birthday'];
+  $_SESSION['gender'] = $user['gender'];
+  $_SESSION['phoneNumber'] = $user['phoneNumber'];
+  $_SESSION['role'] = $user['role'];
 } else {
-    // Redirect to login if email is not set in the session
-    header("Location: ../../login.php");
-    exit();
+  // Redirect to login if email is not set in the session
+  header("Location: ../../login.php");
+  exit();
 }
 
 // Ensure the upload directory exists
 $uploadDir = '../../uploads/';
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true); // Create the directory if it doesn't exist
+  mkdir($uploadDir, 0777, true); // Create the directory if it doesn't exist
 }
 
 // Fetch user details from the session
 $user = [
-    'firstName' => $_SESSION['firstName'],
-    'lastName' => $_SESSION['lastName'],
-    'email' => $_SESSION['email'],
-    'profilePicture' => $_SESSION['profilePicture'],
-    'birthday' => $_SESSION['birthday'],
-    'gender' => $_SESSION['gender'],
-    'phoneNumber' => $_SESSION['phoneNumber'],
-    'role' => $_SESSION['role']
+  'firstName' => $_SESSION['firstName'],
+  'lastName' => $_SESSION['lastName'],
+  'email' => $_SESSION['email'],
+  'profilePicture' => $_SESSION['profilePicture'],
+  'birthday' => $_SESSION['birthday'],
+  'gender' => $_SESSION['gender'],
+  'phoneNumber' => $_SESSION['phoneNumber'],
+  'role' => $_SESSION['role']
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
-    $firstName = $_POST['firstName'];
-    $lastName = $_POST['lastName'];
-    $birthday = $_POST['birthday'];
-    $gender = $_POST['gender'];
-    $phoneNumber = $_POST['phoneNumber'];
-    $email = $_POST['email'];
+  $firstName = $_POST['firstName'];
+  $lastName = $_POST['lastName'];
+  $birthday = $_POST['birthday'];
+  $gender = $_POST['gender'];
+  $phoneNumber = $_POST['phoneNumber'];
+  $email = $_POST['email'];
 
-    // Handle profile picture upload
-    if (isset($_FILES['profilePicture']) && $_FILES['profilePicture']['error'] === UPLOAD_ERR_OK) {
-        $fileName = basename($_FILES['profilePicture']['name']);
-        $targetFilePath = $uploadDir . $fileName;
+  // Get userId using email
+  $getIdQuery = "SELECT userId FROM users WHERE email = ?";
+  $idStmt = $conn->prepare($getIdQuery);
+  $idStmt->bind_param("s", $email);
+  $idStmt->execute();
+  $idResult = $idStmt->get_result();
+  $idRow = $idResult->fetch_assoc();
+  $userId = $idRow['userId'];
 
-        if (move_uploaded_file($_FILES['profilePicture']['tmp_name'], $targetFilePath)) {
-            $profilePicture = $targetFilePath;
-        } else {
-            $profilePicture = $user['profilePicture']; // Keep the old picture if upload fails
-            echo "<script>Swal.fire('Error', 'Failed to upload profile picture.', 'error');</script>";
-        }
+  // Handle profile picture upload
+  if (isset($_FILES['profilePicture']) && $_FILES['profilePicture']['error'] === UPLOAD_ERR_OK) {
+    $fileName = basename($_FILES['profilePicture']['name']);
+    $targetFilePath = $uploadDir . $fileName;
+
+    if (move_uploaded_file($_FILES['profilePicture']['tmp_name'], $targetFilePath)) {
+      $profilePicture = $targetFilePath;
     } else {
-        $profilePicture = $user['profilePicture']; // Keep the old picture if no new picture is uploaded
+      $profilePicture = $user['profilePicture'];
+      echo "<script>
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Failed to upload profile picture.',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+      </script>";
     }
+  } else {
+    $profilePicture = $user['profilePicture'];
+  }
 
-    // Update user details in the database
-    $updateQuery = "UPDATE users SET firstName = ?, lastName = ?, birthday = ?, gender = ?, phoneNumber = ?, email = ?, profilePicture = ? WHERE userId = ?";
-    $stmt = $conn->prepare($updateQuery);
-    $stmt->bind_param("sssssssi", $firstName, $lastName, $birthday, $gender, $phoneNumber, $email, $profilePicture, $userId);
+  // Update user details in the database
+  $updateQuery = "UPDATE users SET firstName = ?, lastName = ?, birthday = ?, gender = ?, phoneNumber = ?, email = ?, profilePicture = ? WHERE userId = ?";
+  $stmt = $conn->prepare($updateQuery);
+  $stmt->bind_param("sssssssi", $firstName, $lastName, $birthday, $gender, $phoneNumber, $email, $profilePicture, $userId);
 
-    if ($stmt->execute()) {
-        echo "<script>Swal.fire('Success', 'Profile updated successfully.', 'success').then(() => { window.location = 'users-profile.php'; });</script>";
-    } else {
-        echo "<script>Swal.fire('Error', 'Error updating profile. Please try again.', 'error');</script>";
-    }
+  if ($stmt->execute()) {
+    // Update session with new values
+    $_SESSION['firstName'] = $firstName;
+    $_SESSION['lastName'] = $lastName;
+    $_SESSION['email'] = $email;
+    $_SESSION['birthday'] = $birthday;
+    $_SESSION['gender'] = $gender;
+    $_SESSION['phoneNumber'] = $phoneNumber;
+    $_SESSION['profilePicture'] = $profilePicture;
+
+    echo "<script>
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Profile updated successfully.',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    }).then(() => {
+      window.location = 'users-profile.php';
+    });
+    </script>";
+  } else {
+    echo "<script>
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Error updating profile. Please try again.',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+    </script>";
+  }
 }
 
 $errorMessage = null; // Initialize an error message variable
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
-    $currentPassword = $_POST['currentPassword'];
-    $newPassword = $_POST['newPassword'];
-    $renewPassword = $_POST['renewPassword'];
+  $currentPassword = $_POST['currentPassword'];
+  $newPassword = $_POST['newPassword'];
+  $renewPassword = $_POST['renewPassword'];
 
-    // Fetch the current password from the database using the email
-    $passwordQuery = "SELECT userId, password FROM users WHERE email = ?";
-    $stmt = $conn->prepare($passwordQuery);
-    $stmt->bind_param("s", $_SESSION['email']);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $userData = $result->fetch_assoc();
+  // Fetch the current password from the database using the email
+  $passwordQuery = "SELECT userId, password FROM users WHERE email = ?";
+  $stmt = $conn->prepare($passwordQuery);
+  $stmt->bind_param("s", $_SESSION['email']);
+  $stmt->execute();
+  $result = $stmt->get_result();
+  $userData = $result->fetch_assoc();
 
-    if ($userData) {
-        $userId = $userData['userId'];
-        $userPassword = $userData['password'];
+  if ($userData) {
+    $userId = $userData['userId'];
+    $userPassword = $userData['password'];
 
-        // Check if the password is hashed
-        if (!password_verify($currentPassword, $userPassword)) {
-            if ($currentPassword !== $userPassword) {
-                $errorMessage = "Current password is incorrect.";
-            } else {
-                // Hash the plain text password in the database
-                $hashedPassword = password_hash($currentPassword, PASSWORD_DEFAULT);
-                $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
-                $stmt->prepare($updatePasswordQuery);
-                $stmt->bind_param("si", $hashedPassword, $userId);
-                $stmt->execute();
-                $userPassword = $hashedPassword;
-            }
-        }
-
-        if (!$errorMessage && password_verify($currentPassword, $userPassword)) {
-            if ($newPassword === $renewPassword) {
-                $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-                $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
-                $stmt->prepare($updatePasswordQuery);
-                $stmt->bind_param("si", $hashedPassword, $userId);
-
-                if ($stmt->execute()) {
-                    echo "<script>
-                        Swal.fire({
-                            title: 'Success',
-                            text: 'Password changed successfully.',
-                            icon: 'success'
-                        }).then(() => {
-                            window.location = 'users-profile.php#profile-change-password';
-                        });
-                    </script>";
-                } else {
-                    $errorMessage = "Error updating password. Please try again.";
-                }
-            } else {
-                $errorMessage = "New passwords do not match.";
-            }
-        } elseif (!$errorMessage) {
-            $errorMessage = "Current password is incorrect.";
-        }
-    } else {
-        $errorMessage = "User not found.";
+    // Check if the password is hashed
+    if (!password_verify($currentPassword, $userPassword)) {
+      if ($currentPassword !== $userPassword) {
+        $errorMessage = "Current password is incorrect.";
+      } else {
+        // Hash the plain text password in the database
+        $hashedPassword = password_hash($currentPassword, PASSWORD_DEFAULT);
+        $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
+        $stmt->prepare($updatePasswordQuery);
+        $stmt->bind_param("si", $hashedPassword, $userId);
+        $stmt->execute();
+        $userPassword = $hashedPassword;
+      }
     }
+
+    if (!$errorMessage && password_verify($currentPassword, $userPassword)) {
+      if ($newPassword === $renewPassword) {
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $updatePasswordQuery = "UPDATE users SET password = ? WHERE userId = ?";
+        $stmt->prepare($updatePasswordQuery);
+        $stmt->bind_param("si", $hashedPassword, $userId);
+
+        if ($stmt->execute()) {
+          echo "<script>
+Swal.fire({
+  toast: true,
+  position: 'top-end',
+  icon: 'success',
+  title: 'Password changed successfully.',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true
+}).then(() => {
+  window.location = 'users-profile.php#profile-change-password';
+});
+</script>";
+        } else {
+          $errorMessage = "Error updating password. Please try again.";
+        }
+      } else {
+        $errorMessage = "New passwords do not match.";
+      }
+    } elseif (!$errorMessage) {
+      $errorMessage = "Current password is incorrect.";
+    }
+  } else {
+    $errorMessage = "User not found.";
+  }
 }
 ?>
 
 <?php if ($errorMessage): ?>
-<script>
+  <script>
     Swal.fire({
-        title: 'Error',
-        text: '<?= htmlspecialchars($errorMessage) ?>',
-        icon: 'error'
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: '<?= htmlspecialchars($errorMessage) ?>',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
     }).then(() => {
-        document.querySelector('[data-bs-target="#profile-change-password"]').click();
+      document.querySelector('[data-bs-target="#profile-change-password"]').click();
     });
-</script>
+  </script>
 <?php endif; ?>
 
 <div class="pagetitle">
@@ -184,10 +242,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
       <div class="card text-center shadow-sm" style="border-radius: 15px; background-color: #DB5C79; color: #ffffff; position: relative; margin-top: 60px;">
         <div class="card-body" style="padding-top: 80px;">
           <div class="profile-picture-container" style="position: absolute; top: -60px; left: 50%; transform: translateX(-50%);">
-            <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : '../../assets/img/default-user.png' ?>" 
-                 alt="Profile Picture" 
-                 class="rounded-circle shadow" 
-                 style="width: 150px; height: 150px; object-fit: cover; border: 5px solid #ffffff;">
+            <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : '../../assets/img/default-user.png' ?>"
+              alt="Profile Picture"
+              class="rounded-circle shadow"
+              style="width: 150px; height: 150px; object-fit: cover; border: 5px solid #ffffff;">
           </div>
           <h2 class="card-title mb-1" style="margin-top: 40px; font-size: 1.5rem; color: #ffffff;"><?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName']) ?></h2>
           <p class="text-light" style="font-size: 1rem;"><?= $user['role'] === 'admin' ? 'Admin' : 'Staff' ?></p>
@@ -216,15 +274,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
           </ul>
           <style>
             .nav-tabs .nav-link {
-              color: #000000; /* Default color for inactive tabs */
-              transition: color 0.3s ease, border-color 0.3s ease; /* Smooth transition for color and border */
+              color: #000000;
+              /* Default color for inactive tabs */
+              transition: color 0.3s ease, border-color 0.3s ease;
+              /* Smooth transition for color and border */
             }
+
             .nav-tabs .nav-link.active {
-              color: #6CCF54 !important; /* Color for active tab */
-              border-color: #6CCF54 !important; /* Change underline color for active tab */
+              color: #6CCF54 !important;
+              /* Color for active tab */
+              border-color: #6CCF54 !important;
+              /* Change underline color for active tab */
             }
+
             .nav-tabs .nav-link:hover {
-              color: #6CCF54; /* Hover color for inactive tabs */
+              color: #6CCF54;
+              /* Hover color for inactive tabs */
             }
           </style>
           <div class="tab-content pt-2">
@@ -255,19 +320,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
             <div class="tab-pane fade profile-edit pt-3" id="profile-edit">
               <!-- Profile Edit Form -->
               <form method="POST" enctype="multipart/form-data">
-                <div class="row mb-3">
-                  <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
-                  <div class="col-md-8 col-lg-9">
-                    <div class="d-flex justify-content-center">
-                      <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>" 
-                           alt="Profile" 
-                           class="shadow">
-                    </div>
-                    <div class="pt-2">
-                      <input type="file" name="profilePicture" class="form-control">
-                    </div>
-                  </div>
-                </div>
+<div class="row mb-3">
+  <label for="profilePicture" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Profile Image</label>
+  <div class="col-md-8 col-lg-9 text-center">
+    <div style="width: 130px; height: 130px; margin: 0 auto 15px; overflow: hidden; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+      <img id="previewImage"
+        src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : '../../assets/img/default-user.png' ?>" 
+        alt="Profile Picture"
+        style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+    <input type="file" name="profilePicture" id="profilePictureInput" class="form-control mt-2">
+  </div>
+</div>
                 <div class="row mb-3">
                   <label for="firstName" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">First Name</label>
                   <div class="col-md-8 col-lg-9">
@@ -346,6 +410,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
     </div>
   </div>
 </section>
+<script>
+  document.getElementById('profilePictureInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('previewImage').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
 
 <?php
 include("./includes/footer.php");

@@ -54,24 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_staff'])) {
   }
   header("Location: staff.php");
   exit();
+  $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+  if ($search != '') {
+    $searchSafe = mysqli_real_escape_string($conn, $search);
+    $query = "SELECT staff_name, staff_id, email, shifts FROM staff WHERE staff_name LIKE '%$searchSafe%' OR email LIKE '%$searchSafe%'";
+  } else {
+    $query = "SELECT staff_name, staff_id, email, shifts FROM staff";
+  }
+  $result = mysqli_query($conn, $query);
 }
 
 // Handle delete staff
 if (isset($_GET['delete_id'])) {
   $delete_id = $_GET['delete_id'];
-  // Get the email of the staff to be deleted
-  $email_query = "SELECT email FROM staff WHERE staff_id = '$delete_id'";
-  $email_result = mysqli_query($conn, $email_query);
-  $email_row = mysqli_fetch_assoc($email_result);
-  $email = $email_row['email'];
-
-  // Delete the staff
   $delete_query = "DELETE FROM staff WHERE staff_id = '$delete_id'";
   if (mysqli_query($conn, $delete_query)) {
-    // Clear the role in the users table
-    $clear_role_query = "UPDATE users SET role = '' WHERE email = '$email'";
-    mysqli_query($conn, $clear_role_query);
-
     $_SESSION['message'] = "Staff deleted successfully.";
     $_SESSION['code'] = "success";
   } else {
@@ -119,13 +116,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assignRole'])) {
 date_default_timezone_set('Asia/Manila'); // Set the timezone
 $current_hour = date('H');
 if ($current_hour >= 8 && $current_hour < 12) {
-    $current_shift = 'Day';
+  $current_shift = 'Day';
 } elseif ($current_hour >= 12 && $current_hour < 17) {
-    $current_shift = 'Afternoon';
+  $current_shift = 'Afternoon';
 } elseif ($current_hour >= 17 && $current_hour < 21) {
-    $current_shift = 'Night';
+  $current_shift = 'Night';
 } else {
-    $current_shift = 'None';
+  $current_shift = 'None';
 }
 
 // Fetch staff data from the database
@@ -189,8 +186,8 @@ $unassigned_users_result = mysqli_query($conn, $unassigned_users_query);
                   echo "<td>" . $row['shifts'] . "</td>";
                   echo "<td>" . $status_icon . "</td>";
                   echo '<td>
-                          <a href="staff_edit.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
-                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></a>
+                          <a href="edit_staff.php?staff_id=' . $row['staff_id'] . '" class="btn btn-warning btn-sm" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
+                          <a href="staff.php?delete_id=' . $row['staff_id'] . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to delete this staff?\')"><i class="bi bi-trash"></i></a>
                         </td>';
                   echo "</tr>";
                 }
@@ -294,141 +291,130 @@ ob_end_flush(); // Flush the output buffer
 <!-- Include SweetAlert2 -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?php if (isset($_SESSION['message']) && $_SESSION['code'] != ''): ?>
-    <script>
-        Swal.fire({
-            icon: "<?php echo $_SESSION['code']; ?>",
-            title: "<?php echo $_SESSION['message']; ?>",
-            confirmButtonColor: "#DB5C79"
-        }).then(() => {
-            window.location = "staff.php";
-        });
-    </script>
-    <?php unset($_SESSION['message'], $_SESSION['code']); ?>
+  <script>
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: "<?php echo $_SESSION['code']; ?>",
+      title: "<?php echo $_SESSION['message']; ?>",
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    }).then(() => {
+      window.location = "staff.php";
+    });
+  </script>
+  <?php unset($_SESSION['message'], $_SESSION['code']); ?>
 <?php endif; ?>
 
 <script>
-function searchStaffFunction() {
-  var input, filter, table, tr, td, i, txtValue;
-  input = document.getElementById("searchStaff");
-  filter = input.value.toUpperCase();
-  table = document.querySelector(".table");
-  tr = table.getElementsByTagName("tr");
+  function searchStaffFunction() {
+    var input, filter, table, tr, td, i, txtValue;
+    input = document.getElementById("searchStaff");
+    filter = input.value.toUpperCase();
+    table = document.querySelector(".table");
+    tr = table.getElementsByTagName("tr");
 
-  for (i = 1; i < tr.length; i++) {
-    tr[i].style.display = "none";
-    td = tr[i].getElementsByTagName("td");
-    for (var j = 0; j < td.length; j++) {
-      if (td[j]) {
-        txtValue = td[j].textContent || td[j].innerText;
-        if (txtValue.toUpperCase().indexOf(filter) > -1) {
-          tr[i].style.display = "";
-          break;
+    for (i = 1; i < tr.length; i++) {
+      tr[i].style.display = "none";
+      td = tr[i].getElementsByTagName("td");
+      for (var j = 0; j < td.length; j++) {
+        if (td[j]) {
+          txtValue = td[j].textContent || td[j].innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+            break;
+          }
         }
       }
     }
   }
-}
 
-document.addEventListener("DOMContentLoaded", function() {
-  const currentShift = "<?php echo $current_shift; ?>";
-  const rows = document.querySelectorAll(".table tbody tr");
-  rows.forEach(row => {
-    const shiftCell = row.cells[3];
-    if (shiftCell && shiftCell.textContent.trim() === currentShift) {
-      row.classList.add("highlight");
-    }
-  });
-
-  // Add event listener for delete buttons
-  document.querySelectorAll('.btn-danger').forEach(button => {
-    button.addEventListener('click', function(event) {
-      event.preventDefault();
-      const deleteUrl = this.getAttribute('href');
-      Swal.fire({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DB5C79',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, delete it!'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          window.location.href = deleteUrl;
-        }
-      });
+  document.addEventListener("DOMContentLoaded", function() {
+    const currentShift = "<?php echo $current_shift; ?>";
+    const rows = document.querySelectorAll(".table tbody tr");
+    rows.forEach(row => {
+      const shiftCell = row.cells[3];
+      if (shiftCell && shiftCell.textContent.trim() === currentShift) {
+        row.classList.add("highlight");
+      }
     });
   });
-});
 </script>
 
 <style>
   .highlight {
     background-color: #FFD700 !important;
   }
+
   .table-striped tbody tr:nth-of-type(odd) {
     background-color: #6CCF54 !important;
   }
+
   .table-striped tbody tr:nth-of-type(even) {
     background-color: #A3E4A7;
   }
-    /* Badge */
-    .badge-custom {
-        background-color: #6ccf54;
-    }
 
-    /* Button */
-    .btn-custom {
-        background-color: #db5c79;
-        border-color: #db5c79;
-        color: #fff;
-    }
+  /* Badge */
+  .badge-custom {
+    background-color: #6ccf54;
+  }
 
-    .btn-custom:hover {
-        background-color: #c04a67;
-        border-color: #c04a67;
-    }
+  /* Button */
+  .btn-custom {
+    background-color: #db5c79;
+    border-color: #db5c79;
+    color: #fff;
+  }
 
-    /* Modal Form */
-    .modal-body {
-        max-height: 400px;
-        overflow-y: auto;
-    }
+  .btn-custom:hover {
+    background-color: #c04a67;
+    border-color: #c04a67;
+  }
 
-    .modal-header {
-        border-bottom: none;
-    }
+  /* Modal Form */
+  .modal-body {
+    max-height: 400px;
+    overflow-y: auto;
+  }
 
-    .modal-title {
-        font-weight: bold;
-    }
+  .modal-header {
+    border-bottom: none;
+  }
 
-    .form-label {
-        font-weight: bold;
-    }
+  .modal-title {
+    font-weight: bold;
+  }
 
-    .btn-primary {
-        background-color: #6ccf54 !important; /* Save button color */
-        border-color: #6ccf54 !important;
-    }
+  .form-label {
+    font-weight: bold;
+  }
 
-    .btn-primary:hover {
-        background-color: #5ab94a !important;
-        border-color: #5ab94a !important;
-    }
+  .btn-primary {
+    background-color: #6ccf54 !important;
+    /* Save button color */
+    border-color: #6ccf54 !important;
+  }
 
-    .btn-secondary {
-        background-color: #db5c79 !important; /* Close button color */
-        border-color: #db5c79 !important;
-    }
+  .btn-primary:hover {
+    background-color: #5ab94a !important;
+    border-color: #5ab94a !important;
+  }
 
-    .btn-secondary:hover {
-        background-color: #c04a67 !important;
-        border-color: #c04a67 !important;
-    }
+  .btn-secondary {
+    background-color: #db5c79 !important;
+    /* Close button color */
+    border-color: #db5c79 !important;
+  }
 
-    /* Make modal wider */
-    .modal-dialog {
-        max-width: 800px !important; /* Adjust width as needed */
-    }
+  .btn-secondary:hover {
+    background-color: #c04a67 !important;
+    border-color: #c04a67 !important;
+  }
+
+  /* Make modal wider */
+  .modal-dialog {
+    max-width: 800px !important;
+    /* Adjust width as needed */
+  }
 </style>
