@@ -1,317 +1,188 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+if (session_status() == PHP_SESSION_NONE) {
+    session_start();
+}
+
 include("./includes/header.php");
-include("./includes/topbar.php"); // Remove messages icon in topbar
+include("./includes/topbar.php");
 include("./includes/sidebar.php");
-include("../../db/config.php"); // Include database configuration
+include("../../dB/config.php");
 
-// Fetch total number of medicines
-$medicine_query = "SELECT COUNT(*) AS total_medicines FROM inventory";
-$medicine_result = mysqli_query($conn, $medicine_query);
-$medicine_data = mysqli_fetch_assoc($medicine_result);
-$total_medicines = $medicine_data['total_medicines'];
+$firstName = 'Guest'; // default fallback name
 
-// Fetch number of medicines with quantity less than 30
-$low_stock_query = "SELECT inventoryId, genericName, brandName, milligram, dosageForm, quantity, price FROM inventory WHERE quantity < 30";
-$low_stock_result = mysqli_query($conn, $low_stock_query);
-$low_stock_medicines = [];
-while ($row = mysqli_fetch_assoc($low_stock_result)) {
-    $low_stock_medicines[] = $row;
+if (isset($_SESSION['user_id'])) {
+    $userId = intval($_SESSION['user_id']);
+    $stmt = $conn->prepare("SELECT firstName, lastName FROM users WHERE userId = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $stmt->bind_result($dbFirstName, $dbLastName);
+    if ($stmt->fetch()) {
+        $_SESSION['firstName'] = $dbFirstName;
+        $_SESSION['lastName'] = $dbLastName;
+    }
+    $stmt->close();
 }
 
-// Fetch orders for the current day
-$current_date = date('Y-m-d');
-$orders_query = "SELECT COUNT(*) AS orders_today FROM `order` WHERE DATE(datetime) = '$current_date'";
-$orders_result = mysqli_query($conn, $orders_query);
-$orders_data = mysqli_fetch_assoc($orders_result);
-$orders_today = $orders_data['orders_today'];
 
-// Fetch orders and calculate total revenue for each order
-$query = "
-    SELECT 
-        DATE(o.datetime) AS order_date, 
-        SUM(oi.total) AS total_revenue
-    FROM 
-        `order` o
-    INNER JOIN 
-        order_items oi 
-    ON 
-        o.orderId = oi.orderId
-    GROUP BY 
-        DATE(o.datetime)
-    ORDER BY 
-        DATE(o.datetime) ASC
-";
-$result = mysqli_query($conn, $query);
-
-if (!$result) {
-    die("Query failed: " . mysqli_error($conn));
-}
-
-$graphData = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $graphData[] = [
-        'order_date' => $row['order_date'],
-        'total_revenue' => $row['total_revenue']
-    ];
-}
-
-// Pass graph data to JavaScript
 ?>
-<script>
-    const graphData = <?php echo json_encode($graphData); ?>;
-</script>
-
-<div class="pagetitle">
-  <h1>Dashboard</h1>
-  <nav>
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-      <li class="breadcrumb-item active">Dashboard</li>
-    </ol>
-  </nav>
-</div><!-- End Page Title -->
-
-<div class="row">
-  <!-- Info Cards -->
-  <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
-      <div class="card-body text-center">
-        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-exclamation-triangle"></i>
-        </div>
-        <h6 class="mt-3">Low on Stock</h6>
-        <h2><?php echo count($low_stock_medicines); ?></h2>
-        <button type="button" class="btn btn-custom mt-3" data-bs-toggle="modal" data-bs-target="#lowStockModal">View Details <i class="bi bi-chevron-right"></i></button>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
-      <div class="card-body text-center">
-        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-capsule"></i>
-        </div>
-        <h6 class="mt-3">Medicines Available</h6>
-        <h2><?php echo $total_medicines; ?></h2>
-        <a href="inventory.php" class="btn btn-custom mt-3">Visit Inventory <i class="bi bi-chevron-right"></i></a>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
-      <div class="card-body text-center">
-        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-cart"></i>
-        </div>
-        <h6 class="mt-3">Orders This Day</h6>
-        <h2><?php echo $orders_today; ?></h2>
-        <a href="orders_prescription.php" class="btn btn-custom mt-3">View Orders <i class="bi bi-chevron-right"></i></a>
-      </div>
-    </div>
+<div class="welcome-banner position-relative text-white mb-4" style="background: url('assets/img/pharmacy-bg.jpg') center center / cover no-repeat; height: 250px; border-radius: 15px;">
+  <div class="overlay position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); border-radius: 15px;"></div>
+  <div class="container h-100 d-flex flex-column justify-content-center align-items-start position-relative p-4">
+    <h2 class="fw-light mb-2">Hi, <?= htmlspecialchars($_SESSION['firstName']) ?>!</h2>
+    <h1 class="display-5 fw-bold">
+      Welcome to <span style="color: #db5c79;">Marest</span> <span style="color: #6ccf54;">Meds</span>
+    </h1>
   </div>
 </div>
 
-<!-- Low Stock Modal -->
-<div class="modal fade" id="lowStockModal" tabindex="-1" aria-labelledby="lowStockModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
+
+<!-- Dashboard Buttons as Cards -->
+<div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
+    <!-- What's New Button -->
+    <div class="card card-button shadow-sm text-center" data-bs-toggle="modal" data-bs-target="#whatsNewModal">
+        <div class="card-body">
+            <i class="bi bi-stars display-4 text-primary mb-2"></i>
+            <h5 class="card-title">What's New</h5>
+        </div>
+    </div>
+
+    <!-- Prescription Required Button -->
+    <div class="card card-button shadow-sm text-center" data-bs-toggle="modal" data-bs-target="#prescriptionModal">
+        <div class="card-body">
+            <i class="bi bi-prescription display-4 text-danger mb-2"></i>
+            <h5 class="card-title">Prescription</h5>
+        </div>
+    </div>
+
+    <!-- Stocks Button -->
+    <a href="inventory.php" class="text-decoration-none">
+        <div class="card card-button shadow-sm text-center">
+            <div class="card-body">
+                <i class="bi bi-box-seam display-4 text-success mb-2"></i>
+                <h5 class="card-title">Stocks</h5>
+            </div>
+        </div>
+    </a>
+
+    <!-- Place Order Button -->
+    <a href="orders_prescription.php" class="text-decoration-none">
+        <div class="card card-button shadow-sm text-center">
+            <div class="card-body">
+                <i class="bi bi-cart-plus display-4 text-warning mb-2"></i>
+                <h5 class="card-title">Order</h5>
+            </div>
+        </div>
+    </a>
+</div>
+
+
+<!-- MODALS -->
+<!-- What's New Modal -->
+<div class="modal fade" id="whatsNewModal" tabindex="-1" aria-labelledby="whatsNewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="lowStockModalLabel">Low on Stock Items</h5>
+        <h5 class="modal-title">🆕 What's New</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Generic Name</th>
-              <th>Brand Name</th>
-              <th>Milligram</th>
-              <th>Dosage Form</th>
-              <th>Quantity</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($low_stock_medicines as $medicine): ?>
-              <tr>
-                <td><?php echo $medicine['genericName']; ?></td>
-                <td><?php echo $medicine['brandName']; ?></td>
-                <td><?php echo $medicine['milligram']; ?></td>
-                <td><?php echo $medicine['dosageForm']; ?></td>
-                <td><?php echo $medicine['quantity']; ?></td>
-                <td><?php echo $medicine['price']; ?></td>
-              </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-body px-4">
+        <ul class="list-group list-group-flush">
+          <?php
+          $newMedsQuery = "SELECT brandName FROM inventory ORDER BY inventoryId DESC LIMIT 5";
+          $newMeds = mysqli_query($conn, $newMedsQuery);
+          while ($med = mysqli_fetch_assoc($newMeds)) :
+          ?>
+            <li class="list-group-item d-flex align-items-center">
+              <i class="bi bi-capsule-pill me-2 text-primary fs-5"></i>
+              <span class="fw-semibold"><?= htmlspecialchars($med['brandName']) ?></span>
+            </li>
+          <?php endwhile; ?>
+        </ul>
       </div>
     </div>
   </div>
 </div>
 
-<div class="row">
-  <div class="col-lg-6">
-    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
-      <div class="card-body">
-        <h5 class="card-title">Sales Performance</h5>
-        <div id="areaChart"></div>
-        <script>
-          document.addEventListener("DOMContentLoaded", () => {
-            const labels = graphData.map(data => data.order_date);
-            const data = graphData.map(data => data.total_revenue);
 
-            new ApexCharts(document.querySelector("#areaChart"), {
-              series: [{
-                name: "Total Revenue",
-                data: data
-              }],
-              chart: {
-                type: 'area',
-                height: 350,
-                zoom: {
-                  enabled: false
-                }
-              },
-              dataLabels: {
-                enabled: false
-              },
-              stroke: {
-                curve: 'smooth'
-              },
-              subtitle: {
-                text: 'Revenue Movements',
-                align: 'left'
-              },
-              colors: ['#DB5C79'],
-              xaxis: {
-                categories: labels,
-                type: 'datetime',
-              },
-              yaxis: {
-                opposite: true
-              },
-              legend: {
-                horizontalAlign: 'left'
-              }
-            }).render();
-          });
-        </script>
+<!-- Prescription Modal -->
+<div class="modal fade" id="prescriptionModal" tabindex="-1" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">🩺 Prescription Required</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-    </div>
-  </div>
-
-  <div class="col-lg-6">
-    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
-      <div class="card-body">
-        <h5 class="card-title">Calendar</h5>
-        <div id="calendar"></div>
+      <div class="modal-body row">
+        <?php
+        $prescriptionQuery = "SELECT brandName AS name, image AS image_path FROM inventory WHERE `group` = 'prescription' LIMIT 4";
+        $prescriptionMeds = mysqli_query($conn, $prescriptionQuery);
+        while ($med = mysqli_fetch_assoc($prescriptionMeds)) :
+        ?>
+        <div class="col-md-3 mb-3">
+            <div class="card border-danger">
+                <img src="<?= htmlspecialchars($med['image_path']) ?>" class="card-img-top" alt="<?= htmlspecialchars($med['name']) ?>" style="height: 150px; object-fit: cover;">
+                <div class="card-body">
+                    <h6 class="card-title text-center text-danger"><?= htmlspecialchars($med['name']) ?></h6>
+                </div>
+            </div>
+        </div>
+        <?php endwhile; ?>
       </div>
     </div>
   </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const calendarElement = document.getElementById('calendar');
-    const currentDate = new Date();
-    const currentDay = currentDate.getDate();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
+<?php include("./includes/footer.php"); ?>
 
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    let calendarHTML = '<table class="table table-bordered"><thead><tr>';
-
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    daysOfWeek.forEach(day => {
-      calendarHTML += `<th>${day}</th>`;
-    });
-
-    calendarHTML += '</tr></thead><tbody><tr>';
-
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      calendarHTML += '<td></td>';
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      if ((day + firstDayOfMonth - 1) % 7 === 0) {
-        calendarHTML += '</tr><tr>';
-      }
-      if (day === currentDay) {
-        calendarHTML += `<td style="background-color: #DB5C79; color: white;">${day}</td>`;
-      } else {
-        calendarHTML += `<td>${day}</td>`;
-      }
-    }
-
-    const lastDayOfMonth = new Date(currentYear, currentMonth, daysInMonth).getDay();
-    for (let i = lastDayOfMonth + 1; i < 7; i++) {
-      calendarHTML += '<td></td>';
-    }
-
-    calendarHTML += '</tr></tbody></table>';
-    calendarElement.innerHTML = calendarHTML;
-  });
-</script>
-
-<?php
-include("./includes/footer.php");
-?>
+<!-- Bootstrap Icons (add this if not already included) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
 <style>
-/* Dashboard Info Cards */
-.info-card {
-  padding: 20px;
-  border-radius: 15px; /* Changed to make corners rounded */
-  border: 3px solid #52e42e; /* Border color same as buttons */
-  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
-  margin-bottom: 20px;
-}
+    .pagetitle h1 {
+        font-weight: 700;
+        color: #2a8c7c;
+    }
+    .card-button {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    }
 
-.info-card .card-icon {
-  font-size: 32px;
-  line-height: 0;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  flex-grow: 0;
-  background: #f6f6fe;
-  color:rgb(233, 75, 75);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    .card-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
 
-.info-card h5 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #012970;
-}
+    .card-button .card-body {
+        margin-top: 2rem;
+        padding: 0;
+    }
 
-.info-card h6 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #012970;
-}
+    .card-button .card-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.2rem;
+    }
 
-.info-card .btn {
-  margin-top: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #6CCF54;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-}
+    .card-button .card-text {
+        display: none; /* Optional: hide for cleaner circular UI */
+    }
 
-.info-card .btn:hover {
-  background: #5bbf4a;
-}
+
+    .list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+    font-size: 1rem;
+  }
+
 </style>

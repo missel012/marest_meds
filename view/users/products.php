@@ -36,7 +36,7 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
 </div><!-- End Page Title -->
 
 <section class="section">
-<div class="row align-items-top">
+    <div class="row align-items-top">
         <div class="d-flex flex-row w-100">
             <!-- Left Card -->
             <div class="card" style="flex: 3; margin-right: 10px;">
@@ -48,40 +48,86 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
                             <button class="nav-link" id="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>-tab" data-bs-toggle="pill" data-bs-target="#pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" type="button" role="tab" aria-controls="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" aria-selected="false"><?php echo htmlspecialchars($category); ?></button>
                         <?php endforeach; ?>
                     </div>
+
                     <div class="tab-content pt-2" id="myTabContent">
+                        <!-- All Items Tab -->
                         <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
                             <div class="row">
-                                <!-- All Items Tab -->
                                 <?php foreach ($inventory as $category => $items) : ?>
                                     <?php foreach ($items as $item) : ?>
-                                        <div class="col-lg-3">
+                                        <div class="col-lg-4">
                                             <button type="button" class="btn custom-card mt-2 mb-2"
-                                                onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '<?php echo $item['group']; ?>', <?php echo $item['inventoryId']; ?>)">
+                                                onclick="showDrugDetails(
+        '<?php echo base64_encode($item['image']); ?>',
+        '<?php echo htmlspecialchars($item['genericName']); ?>',
+        '<?php echo htmlspecialchars($item['brandName']); ?>',
+        '<?php echo $item['milligram']; ?>',
+        '<?php echo htmlspecialchars($item['dosageForm']); ?>',
+        '<?php echo htmlspecialchars($item['group']); ?>',
+        '<?php echo $item['quantity']; ?>',
+        '<?php echo number_format($item['price'], 2); ?>',
+        '<?php echo $item['inventoryId']; ?>'
+    )">
                                                 <div class="card-body text-center" style="font-size: 0.875rem;">
-                                                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?></h5>
-                                                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $item['inventoryId']; ?>"><?php echo $item['quantity']; ?></span></h6>
+                                                    <!-- Image on top -->
+                                                    <img src="data:image/jpeg;base64,<?php echo base64_encode($item['image']); ?>"
+                                                        alt="Product Image"
+                                                        class="img-fluid mb-2 custom-card-img-square" />
+
+                                                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -0.5rem">
+                                                        <?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?>
+                                                    </h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">
+                                                        Quantity in Stock:
+                                                        <span id="stock-<?php echo $item['inventoryId']; ?>">
+                                                            <?php echo $item['quantity']; ?>
+                                                        </span>
+                                                    </h6>
                                                     <p class="card-text" style="font-size: 0.75rem;">₱<?php echo number_format($item['price'], 2); ?></p>
                                                 </div>
-                                            </button><!-- End Card with an image on top -->
+                                            </button>
                                         </div>
                                     <?php endforeach; ?>
                                 <?php endforeach; ?>
                             </div>
                         </div>
+
+                        <!-- Category Tabs -->
                         <?php foreach ($inventory as $category => $items) : ?>
                             <div class="tab-pane fade" id="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" role="tabpanel" aria-labelledby="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>-tab">
                                 <div class="row">
-                                    <!-- Category Tab -->
                                     <?php foreach ($items as $item) : ?>
-                                        <div class="col-lg-3">
+                                        <div class="col-lg-4">
                                             <button type="button" class="btn custom-card mt-2 mb-2"
-                                                onclick="addToCart('<?php echo $item['genericName']; ?>', '<?php echo $item['brandName']; ?>', <?php echo $item['price']; ?>, '<?php echo $item['group']; ?>', <?php echo $item['inventoryId']; ?>)">
+                                                onclick="showDrugDetails(
+        '<?php echo base64_encode($item['image']); ?>',
+        '<?php echo htmlspecialchars($item['genericName']); ?>',
+        '<?php echo htmlspecialchars($item['brandName']); ?>',
+        '<?php echo $item['milligram']; ?>',
+        '<?php echo htmlspecialchars($item['dosageForm']); ?>',
+        '<?php echo htmlspecialchars($item['group']); ?>',
+        '<?php echo $item['quantity']; ?>',
+        '<?php echo number_format($item['price'], 2); ?>',
+        '<?php echo $item['inventoryId']; ?>' 
+    )">
                                                 <div class="card-body text-center" style="font-size: 0.875rem;">
-                                                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem"><?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?></h5>
-                                                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">Quantity in Stock: <span id="stock-<?php echo $item['inventoryId']; ?>"><?php echo $item['quantity']; ?></span></h6>
+                                                    <!-- Image on top -->
+                                                    <img src="data:image/jpeg;base64,<?php echo base64_encode($item['image']); ?>"
+                                                        alt="Product Image"
+                                                        class="img-fluid mb-2 custom-card-img-square" />
+
+                                                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -0.5rem">
+                                                        <?php echo $item['genericName'] . ' ' . $item['brandName'] . ' ' . $item['milligram'] . ' mg ' . $item['dosageForm']; ?>
+                                                    </h5>
+                                                    <h6 class="card-subtitle mb-2 text-muted" style="font-size: 0.75rem;">
+                                                        Quantity in Stock:
+                                                        <span id="stock-<?php echo $item['inventoryId']; ?>">
+                                                            <?php echo $item['quantity']; ?>
+                                                        </span>
+                                                    </h6>
                                                     <p class="card-text" style="font-size: 0.75rem;">₱<?php echo number_format($item['price'], 2); ?></p>
                                                 </div>
-                                            </button><!-- End Card with an image on top -->
+                                            </button>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -95,9 +141,13 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
             <div class="card" style="flex: 1.5; margin-left: 10px;">
                 <div class="card-body" style="font-family: inherit;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title">Order Summary</h5>
+                        <h5 class="card-title text-black">
+                            <i class="bi bi-cart-fill" style="margin-right: 6px;"></i> Cart
+                        </h5>
                         <button type="button" class="btn btn-outline-danger" id="delete-btn" style="display: none;" onclick="clearCart()">Delete All</button>
                     </div>
+
+
                     <div id="cart-items">
                         <!-- Cart items will be dynamically added here -->
                     </div>
@@ -118,128 +168,48 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
     </div>
 </section>
 
+<!-- Drug Details Modal -->
+<div class="modal fade" id="drugDetailModal" tabindex="-1" aria-labelledby="drugDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg"><!-- Changed modal-lg to modal-xl -->
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title text-white" id="drugDetailModalLabel">Drug Details</h5> <!-- Ensured text-white class -->
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body d-flex justify-content-center align-items-center ml-10">
+                <!-- Increased margin-left to 5rem -->
+                <div class="row align-items-center" style="margin-left: 5rem;">
+                    <!-- Image on the left -->
+                    <div class="col-md-4 text-center mb-3 mb-md-0">
+                        <img id="modalDrugImage" src="" class="img-fluid rounded" style="width: 100%; max-width: 300px; height: auto; object-fit: cover;" alt="Drug Image" />
+                    </div>
+
+                    <!-- Details on the right -->
+                    <div class="col-md-8 d-flex flex-column justify-content-center">
+                        <h5 id="modalDrugName" class="mb-3"></h5>
+                        <p id="modalDosage" class="mb-1"></p>
+                        <p id="modalGroup" class="mb-1"><strong>Category:</strong> <span></span></p>
+                        <p id="modalStock" class="mb-1"><strong>Stock:</strong> <span></span></p>
+                        <p id="modalPrice" class="fw-bold"><strong>Price:</strong> ₱<span></span></p>
+
+                        <!-- Add to Cart button with custom color -->
+                        <button id="modalAddToCartBtn" class="btn mt-3 w-50 align-self-start"
+                            style="background-color: #6CCF54; color: white;">
+                            Add to Cart
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php
 include("./includes/footer.php");
 ?>
 
-<!-- Add Inventory Modal -->
-<div class="modal fade" id="addInventoryModal" tabindex="-1" aria-labelledby="addInventoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addInventoryModalLabel">Add Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="addInventoryForm">
-                    <div class="mb-3">
-                        <label for="genericName" class="form-label">Generic Name</label>
-                        <input type="text" class="form-control" id="genericName" name="genericName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="brandName" class="form-label">Brand Name</label>
-                        <input type="text" class="form-control" id="brandName" name="brandName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="milligram" class="form-label">Milligram</label>
-                        <input type="text" class="form-control" id="milligram" name="milligram" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="dosageForm" class="form-label">Dosage</label>
-                        <input type="text" class="form-control" id="dosageForm" name="dosageForm" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="quantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="price" class="form-label">Price</label>
-                        <input type="number" step="0.01" class="form-control" id="price" name="price" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="group" class="form-label">Group</label>
-                        <input type="text" class="form-control" id="group" name="group" required>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Inventory Modal -->
-<div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editInventoryModalLabel">Edit Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="editInventoryForm">
-                    <input type="hidden" id="editInventoryId" name="inventoryId">
-                    <div class="mb-3">
-                        <label for="editGenericName" class="form-label">Generic Name</label>
-                        <input type="text" class="form-control" id="editGenericName" name="genericName" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editBrandName" class="form-label">Brand Name</label>
-                        <input type="text" class="form-control" id="editBrandName" name="brandName" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editMilligram" class="form-label">Milligram</label>
-                        <input type="text" class="form-control" id="editMilligram" name="milligram" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editDosageForm" class="form-label">Dosage</label>
-                        <input type="text" class="form-control" id="editDosageForm" name="dosageForm" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editQuantity" class="form-label">Quantity</label>
-                        <input type="number" class="form-control" id="editQuantity" name="quantity" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editPrice" class="form-label">Price</label>
-                        <input type="number" step="0.01" class="form-control" id="editPrice" name="price" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editGroup" class="form-label">Group</label>
-                        <input type="text" class="form-control" id="editGroup" name="group" disabled>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Inventory Modal -->
-<div class="modal fade" id="deleteInventoryModal" tabindex="-1" aria-labelledby="deleteInventoryModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteInventoryModalLabel">Delete Item</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this item?</p>
-                <form id="deleteInventoryForm">
-                    <input type="hidden" id="deleteInventoryId" name="inventoryId">
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger">Delete</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
 <style>
     /* Custom card styles */
@@ -250,7 +220,7 @@ include("./includes/footer.php");
         text-align: left;
         padding: 0;
         width: 100%;
-        height: 130px;
+        height: 250px;
         /* Set a fixed height */
         display: flex;
         flex-direction: column;
@@ -281,6 +251,18 @@ include("./includes/footer.php");
         transition: all 0.3s ease;
         width: 100%;
     }
+
+    .custom-card-img-square {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+        /* optional: for rounded corners */
+        display: block;
+        margin: 0 auto;
+        /* center horizontally */
+    }
+
 
     .custom-card:hover .custom-card-img {
         opacity: 0.5;
@@ -475,14 +457,30 @@ include("./includes/footer.php");
     async function addToCart(genericName, brandName, itemPrice, group, inventoryId) {
         await fetchLatestOrderId(); // Fetch updated Order ID before adding to cart
 
+        console.log("Adding to cart:", {
+            genericName,
+            brandName,
+            itemPrice,
+            group,
+            inventoryId
+        });
+
         const itemName = `${genericName} ${brandName}`;
         const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
+        console.log("Stock elements found:", stockElements);
+
+        if (stockElements.length === 0) {
+            console.error(`No stock element found for inventoryId: ${inventoryId}`);
+            return; // Exit the function if no stock element is found
+        }
+
         const originalQuantity = parseInt(stockElements[0].innerText);
+        console.log("Original quantity:", originalQuantity);
 
         if (!cart[itemName]) {
             cart[itemName] = {
                 quantity: 0,
-                price: itemPrice,
+                price: parseFloat(itemPrice),
                 inventoryId: inventoryId,
                 medicineGroup: group,
                 originalQuantity: originalQuantity
@@ -492,9 +490,15 @@ include("./includes/footer.php");
             cart[itemName].quantity++;
             updateStock(inventoryId, -1);
             updateCart();
+
+            // Update the modal's stock display
+            const modalStockElement = document.getElementById('modalStock');
+            if (modalStockElement) {
+                const currentStock = parseInt(modalStockElement.textContent.split(': ')[1]);
+                modalStockElement.textContent = `Quantity in Stock: ${currentStock - 1}`;
+            }
         }
     }
-
 
     function updateCart() {
         const cartItems = document.getElementById('cart-items');
@@ -510,30 +514,30 @@ include("./includes/footer.php");
             const totalPrice = item.quantity * item.price;
             total += totalPrice;
             cartItems.innerHTML += `
-            <div class="cart-item">
-                <div class="item-details">
-                    <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">${itemName}</h5>
-                    <p class="card-text" style="font-size: 0.75rem;">₱${totalPrice.toFixed(2)}</p>
-                </div>
-                <div class="item-quantity">
-                    <button onclick="changeQuantity('${itemName}', -1)" ${item.quantity === 0 ? 'disabled' : ''}>-</button>
-                    <span>${item.quantity}</span>
-                    <button onclick="changeQuantity('${itemName}', 1)" ${item.quantity === item.originalQuantity ? 'disabled' : ''}>+</button>
-                    <div class="icon" onclick="removeFromCart('${itemName}')">
-                        <i class="bi bi-trash"></i>
-                    </div>
+        <div class="cart-item">
+            <div class="item-details">
+                <h5 class="card-title" style="font-size: 0.75rem; margin-top: -1rem">${itemName}</h5>
+                <p class="card-text" style="font-size: 0.75rem;">₱${totalPrice.toFixed(2)}</p>
+            </div>
+            <div class="item-quantity">
+                <button onclick="changeQuantity('${itemName}', -1)" ${item.quantity === 0 ? 'disabled' : ''}>-</button>
+                <span>${item.quantity}</span>
+                <button onclick="changeQuantity('${itemName}', 1)" ${item.quantity === item.originalQuantity ? 'disabled' : ''}>+</button>
+                <div class="icon" onclick="removeFromCart('${itemName}')">
+                    <i class="bi bi-trash"></i>
                 </div>
             </div>
-        `;
+        </div>
+    `;
         }
 
         // Add the "Print Receipt" button only if there are items in the cart
         if (Object.keys(cart).length > 0) {
             cartItems.innerHTML += `
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-primary" id="print-receipt-btn" onclick="showReceipt()">Print Receipt</button>
-            </div>
-            `;
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-primary" id="print-receipt-btn" onclick="showReceipt()">Print Receipt</button>
+        </div>
+        `;
         }
 
         totalAmount.innerText = `₱${total.toFixed(2)}`;
@@ -547,147 +551,13 @@ include("./includes/footer.php");
         }
     }
 
-    async function showReceipt() {
-        await fetchLatestOrderId(); // Ensure latest order ID is fetched
-
-        const cartSummary = document.getElementById('cart-summary');
-        const cartItems = document.getElementById('cart-items');
-        let total = 0;
-
-        // Capture the time when Print Receipt is clicked
-        const now = new Date();
-        const formattedDateTime = now.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: 'numeric',
-            second: 'numeric',
-            hour12: true
+    function updateStock(inventoryId, change) {
+        const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
+        stockElements.forEach(stockElement => {
+            const currentStock = parseInt(stockElement.innerText);
+            stockElement.innerText = currentStock + change;
         });
-
-        let receiptContent = `
-        <div class="d-flex align-items-center justify-content-center">
-            <a class="logo_bw d-flex align-items-center" style="margin-top: 30px; justify-content: center;">
-                <img src="../../assets/img/marest_logo_bw.png" alt="Logo">
-                <span class="d-none d-lg-block">
-                    <span style="color:  black ; font-weight: bold;">Marest</span>
-                    <span style="color: #525252; font-weight: bold;">Meds</span>
-                </span>
-            </a>
-        </div>
-        <div id="receipt-datetime" class="text-center" style="margin-top: 10px; font-size: 0.875rem;">${formattedDateTime}</div>
-        <div class="text-center" style="margin-top: 10px; font-size: 0.875rem;">
-            <hr style="border-top: 1px dashed black;">
-            Order ID: ${nextOrderId}
-            <hr style="border-top: 1px dashed black;">
-        </div>
-    `;
-
-        for (const itemName in cart) {
-            const item = cart[itemName];
-            const totalPrice = item.quantity * item.price;
-            total += totalPrice;
-
-            receiptContent += `
-        <div style="display: flex; justify-content: space-between; font-family: inherit; color: black; font-size: 0.875rem; margin-top: -10px;">
-            <h5 class="card-title" style="font-size: 0.75rem; font-family: Consolas; margin-top: -1rem; flex: 1; color: black;">${itemName}</h5>
-            <span style="font-size: 0.75rem; flex: 1; text-align: center;">${item.quantity}</span>
-            <p class="card-text" style="font-size: 0.75rem; flex: 1; text-align: right;">₱${totalPrice.toFixed(2)}</p>
-        </div>
-    `;
-        }
-
-        receiptContent += `
-        <hr style="border-top: 1px solid black; margin-top: -5px; margin-bottom: -5px;">
-        <div style="display: flex; justify-content: space-between; font-family: inherit; color: black; font-size: 0.875rem; align-items: center;">
-            <h5 class="card-title" style="color: black; font-family: Consolas; font-size: 0.875rem; margin-right: auto;">Total</h5>
-            <p id="total-amount" class="card-text" style="color: black; font-size: 0.875rem; text-align: right; margin-left: auto;">₱${total.toFixed(2)}</p>
-        </div>
-        <div style="display: flex; justify-content: center; font-family: inherit; color: black; font-size: 0.875rem; align-items: center; margin-bottom: 10px;">
-            <span style="font-size: 0.875rem; color: black; font-family: Consolas; ">Thank you for shopping with us!</span>
-        </div>
-    `;
-
-        // Clear the cart items and show the receipt
-        cartItems.innerHTML = '';
-        cartSummary.style.display = 'block';
-        cartSummary.querySelector('.card-body').innerHTML = receiptContent;
-
-        // Send the cart data to the server
-        fetch('orders_post.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(cart)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Order Successful',
-                        text: 'Your order has been placed successfully!',
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Order Unsuccessful',
-                        text: 'There was an error placing your order. Please try again.',
-                    });
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Order Unsuccessful',
-                    text: 'There was an error placing your order. Please try again.',
-                });
-                console.error('Error:', error);
-            });
-
-        // Clear the cart
-        cart = {};
     }
-
-    function updateReceiptOrderId() {
-        const receiptOrderIdElement = document.querySelector('.text-center').querySelector('div:nth-child(3)');
-        if (receiptOrderIdElement) {
-            receiptOrderIdElement.innerHTML = `
-                <hr style="border-top: 1px dashed black;">
-                Order ID: ${nextOrderId}
-                <hr style="border-top: 1px dashed black;">
-            `;
-        }
-    }
-
-    function updateDateTime() {
-        const dateTimeElement = document.getElementById('receipt-datetime');
-        if (dateTimeElement) {
-            const now = new Date();
-            const formattedDateTime = now.toLocaleString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                second: 'numeric',
-                hour12: true
-            });
-            dateTimeElement.innerText = formattedDateTime;
-        }
-    }
-
-    // Function to clear the cart
-    function clearCart() {
-        for (const itemName in cart) {
-            updateStock(cart[itemName].inventoryId, cart[itemName].quantity);
-        }
-        cart = {}; // Clear the cart object
-        updateCart();
-    }
-
 
     function changeQuantity(itemName, change) {
         if (cart[itemName]) {
@@ -711,19 +581,40 @@ include("./includes/footer.php");
         }
     }
 
-    function updateStock(inventoryId, change) {
-        const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
-        stockElements.forEach(stockElement => {
-            const currentStock = parseInt(stockElement.innerText);
-            stockElement.innerText = currentStock + change;
-        });
-    }
-
-    document.getElementById('delete-all-btn').addEventListener('click', function() {
+    function clearCart() {
         for (const itemName in cart) {
             updateStock(cart[itemName].inventoryId, cart[itemName].quantity);
         }
-        cart = {};
+        cart = {}; // Clear the cart object
         updateCart();
-    });
+    }
+
+    function showDrugDetails(imageBase64, genericName, brandName, milligram, dosageForm, group, quantity, price, inventoryId) {
+        const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
+
+        document.getElementById('modalDrugImage').src = imageSrc;
+        document.getElementById('modalDrugName').textContent = `${genericName} ${brandName}`;
+        document.getElementById('modalDosage').textContent = `Dosage: ${milligram} mg - ${dosageForm}`;
+        document.getElementById('modalGroup').textContent = `Group: ${group}`;
+
+        // Calculate the updated stock based on the cart
+        const itemName = `${genericName} ${brandName}`;
+        const cartQuantity = cart[itemName] ? cart[itemName].quantity : 0;
+        const updatedQuantity = quantity - cartQuantity;
+
+        document.getElementById('modalStock').textContent = `Quantity in Stock: ${updatedQuantity}`;
+        document.getElementById('modalPrice').textContent = `Price: ₱${price}`;
+
+        // Debugging log to ensure inventoryId is correct
+        console.log("Inventory ID passed to modal:", inventoryId);
+
+        // Dynamically set the onclick handler for the Add to Cart button
+        const addToCartBtn = document.getElementById('modalAddToCartBtn');
+        addToCartBtn.onclick = function() {
+            addToCart(genericName, brandName, price, group, inventoryId);
+        };
+
+        const modal = new bootstrap.Modal(document.getElementById('drugDetailModal'));
+        modal.show();
+    }
 </script>
