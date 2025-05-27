@@ -72,246 +72,176 @@ while ($row = mysqli_fetch_assoc($result)) {
 </div><!-- End Page Title -->
 
 <div class="row">
-  <!-- Info Cards -->
-  <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
-      <div class="card-body text-center">
-        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-exclamation-triangle"></i>
-        </div>
-        <h6 class="mt-3">Low on Stock</h6>
-        <h2><?php echo count($low_stock_medicines); ?></h2>
-        <button type="button" class="btn btn-custom mt-3" data-bs-toggle="modal" data-bs-target="#lowStockModal">View Details <i class="bi bi-chevron-right"></i></button>
-      </div>
-    </div>
-  </div>
 
-  <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
-      <div class="card-body text-center">
-        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-capsule"></i>
-        </div>
-        <h6 class="mt-3">Medicines Available</h6>
-        <h2><?php echo $total_medicines; ?></h2>
-        <a href="inventory.php" class="btn btn-custom mt-3">Visit Inventory <i class="bi bi-chevron-right"></i></a>
-      </div>
-    </div>
-  </div>
 
-  <div class="col-lg-4 col-md-6">
-    <div class="card info-card low-stock-card" style="border: 3px solid #6CCF54;">
-      <div class="card-body text-center">
-        <div class="card-icon rounded-circle d-flex align-items-center justify-content-center mx-auto">
-          <i class="bi bi-cart"></i>
-        </div>
-        <h6 class="mt-3">Orders This Day</h6>
-        <h2><?php echo $orders_today; ?></h2>
-        <a href="prescriptionOrders.php" class="btn btn-custom mt-3">View Orders <i class="bi bi-chevron-right"></i></a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Low Stock Modal -->
-<div class="modal fade" id="lowStockModal" tabindex="-1" aria-labelledby="lowStockModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="lowStockModalLabel">Low on Stock Items</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <table class="table table-bordered">
-          <thead>
-            <tr>
-              <th>Generic Name</th>
-              <th>Brand Name</th>
-              <th>Milligram</th>
-              <th>Dosage Form</th>
-              <th>Quantity</th>
-              <th>Price</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($low_stock_medicines as $medicine): ?>
-              <tr>
-                <td><?php echo $medicine['genericName']; ?></td>
-                <td><?php echo $medicine['brandName']; ?></td>
-                <td><?php echo $medicine['milligram']; ?></td>
-                <td><?php echo $medicine['dosageForm']; ?></td>
-                <td><?php echo $medicine['quantity']; ?></td>
-                <td><?php echo $medicine['price']; ?></td>
-              </tr>
-            <?php endforeach; ?>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-lg-6">
-    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
-      <div class="card-body">
-        <h5 class="card-title">Sales Performance</h5>
-        <div id="areaChart"></div>
-        <script>
-          document.addEventListener("DOMContentLoaded", () => {
-            const labels = graphData.map(data => data.order_date);
-            const data = graphData.map(data => data.total_revenue);
-
-            new ApexCharts(document.querySelector("#areaChart"), {
-              series: [{
-                name: "Total Revenue",
-                data: data
-              }],
-              chart: {
-                type: 'area',
-                height: 350,
-                zoom: {
-                  enabled: false
-                }
-              },
-              dataLabels: {
-                enabled: false
-              },
-              stroke: {
-                curve: 'smooth'
-              },
-              subtitle: {
-                text: 'Revenue Movements',
-                align: 'left'
-              },
-              colors: ['#DB5C79'],
-              xaxis: {
-                categories: labels,
-                type: 'datetime',
-              },
-              yaxis: {
-                opposite: true
-              },
-              legend: {
-                horizontalAlign: 'left'
-              }
-            }).render();
-          });
-        </script>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-6">
-    <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
-      <div class="card-body">
-        <h5 class="card-title">Calendar</h5>
-        <div id="calendar"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function() {
-    const calendarElement = document.getElementById('calendar');
-    const currentDate = new Date();
-    const currentDay = currentDate.getDate();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    let calendarHTML = '<table class="table table-bordered"><thead><tr>';
-
-    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    daysOfWeek.forEach(day => {
-      calendarHTML += `<th>${day}</th>`;
-    });
-
-    calendarHTML += '</tr></thead><tbody><tr>';
-
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-    for (let i = 0; i < firstDayOfMonth; i++) {
-      calendarHTML += '<td></td>';
+<!-- Home Page Content -->
+<!-- Home Banners Section -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About Us Banner Only</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
     }
 
-    for (let day = 1; day <= daysInMonth; day++) {
-      if ((day + firstDayOfMonth - 1) % 7 === 0) {
-        calendarHTML += '</tr><tr>';
-      }
-      if (day === currentDay) {
-        calendarHTML += `<td style="background-color: #DB5C79; color: white;">${day}</td>`;
-      } else {
-        calendarHTML += `<td>${day}</td>`;
-      }
+    .home-banner-container {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      border-radius: 0;
     }
 
-    const lastDayOfMonth = new Date(currentYear, currentMonth, daysInMonth).getDay();
-    for (let i = lastDayOfMonth + 1; i < 7; i++) {
-      calendarHTML += '<td></td>';
+    .about-us {
+      position: relative;
     }
 
-    calendarHTML += '</tr></tbody></table>';
-    calendarElement.innerHTML = calendarHTML;
-  });
-</script>
+    .about-us img {
+      width: 620%;
+      height: 490px;
+      object-fit: cover;
+      display: block;
+    }
 
-<?php
-include("./includes/footer.php");
-?>
+    .about-us button {
+      position: absolute;
+      bottom: 120px;
+      left: 330px;
+      padding: 10px 45px;
+      border: none;
+      background-color: rgba(49, 247, 0, 0.69);
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- About Us Banner -->
+  <div class="home-banner-container">
+    <div class="about-us">
+      <img src="../../assets/img/huhu.jpg" alt="About Us" />
+      <button onclick="location.href='about-us.php'">Learn More About Us</button>
+    </div>
+  </div>
+
+</body>
+</html>
 
 <style>
-/* Dashboard Info Cards */
-.info-card {
-  padding: 20px;
-  border-radius: 15px; /* Changed to make corners rounded */
-  border: 3px solid #52e42e; /* Border color same as buttons */
-  box-shadow: 0px 0 30px rgba(1, 41, 112, 0.1);
-  margin-bottom: 20px;
-}
+  .featured-categories-section {
+    margin-top: 50px;
+    margin-bottom: 20px;
+    margin-left: 50px;
+  }
 
-.info-card .card-icon {
-  font-size: 32px;
-  line-height: 0;
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  flex-grow: 0;
-  background: #f6f6fe;
-  color:rgb(233, 75, 75);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  
+</style> 
+<!-- Featured Categories Section -->
+<!-- Featured Categories Section -->
+<div class="featured-categories-section">
+ <h2>Featured Categories</h2></h2>
 
-.info-card h5 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #012970;
-}
+  </div>
+</div>
 
-.info-card h6 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #012970;
-}
+  <div class="categories-container">
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol.jpg" alt="Analgesic" />
+      <span>Analgesic</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/ant.jpg" alt="Antibiotic" />
+      <span>Antibiotic</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol3.jpg" alt="Antidiabetic" />
+      <span>Antidiabetic</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol.7.jpg" alt="Antihistamine" />
+      <span>Antihistamine</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol2.jpg" alt="Antihypertensive" />
+  
+      <span>Antihypertensive</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol5.jpg" alt="NSAID" />
+      <span>NSAID</span>
+      
+    </a>
+  </div>
+</div>
+</div> <!-- end of featured-categories-section -->
 
-.info-card .btn {
-  margin-top: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #fff;
-  background: #6CCF54;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-}
+<br><br> <!-- space before Popular Products -->
 
-.info-card .btn:hover {
-  background: #5bbf4a;
-}
-</style>
+
+  <section class="popular-products-section" style="text-align: left; padding: 30px 20px;">
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;margin-left: 40px; color:rgb(179, 2, 2);">
+    Popular Products
+  </h2>
+
+  <!-- View More Button -->
+  <div style="text-align: right; margin-top: 10px;">
+    <button style="padding: 5px 10px; font-size: 14px; cursor: pointer; background-color: red; color: white; border: none; border-radius: 5px;">
+      View More Products
+    </button>
+  </div>
+</section>
+
+
+</div>
+</div>
+  <div class="popular-products">
+    <!-- First 5 popular products -->
+    <div class="product-card">
+      <img src="../../assets/img/brufen.jpg" alt="Analgesic">
+      <span>Analgesic</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/amoxil.jpg" alt="Antibiotic">
+      <span>Antibiotic</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/cetzine.png" alt="Antidiabetic">
+      <span>Antidiabetic</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/calpol.jpg" alt="Antihistamine">
+      <span>Antihistamine</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/dolex.jpg" alt="NSAID">
+      <span>NSAID</span>
+    </div>
+  </div>
+
+
+
+  <!-- Hidden additional products -->
+  <div class="more-products hidden">
+    <div class="product-card">
+      <img src="https://via.placeholder.com/150" alt="Antihypertensive">
+      <span>Antihypertensive</span>
+    </div>
+    <div class="product-card">
+      <img src="https://via.placeholder.com/150" alt="Extra Medicine">
+      <span>Extra Medicine</span>
+    </div>
+  </div>
+</section>
+
+  
+</body>
+</html>
+
