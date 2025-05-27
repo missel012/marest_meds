@@ -63,6 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
   $phoneNumber = $_POST['phoneNumber'];
   $email = $_POST['email'];
 
+  // Get userId using email
+  $getIdQuery = "SELECT userId FROM users WHERE email = ?";
+  $idStmt = $conn->prepare($getIdQuery);
+  $idStmt->bind_param("s", $email);
+  $idStmt->execute();
+  $idResult = $idStmt->get_result();
+  $idRow = $idResult->fetch_assoc();
+  $userId = $idRow['userId'];
+
   // Handle profile picture upload
   if (isset($_FILES['profilePicture']) && $_FILES['profilePicture']['error'] === UPLOAD_ERR_OK) {
     $fileName = basename($_FILES['profilePicture']['name']);
@@ -71,21 +80,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
     if (move_uploaded_file($_FILES['profilePicture']['tmp_name'], $targetFilePath)) {
       $profilePicture = $targetFilePath;
     } else {
-      $profilePicture = $user['profilePicture']; // Keep the old picture if upload fails
+      $profilePicture = $user['profilePicture'];
       echo "<script>
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: 'Failed to upload profile picture.',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-    </script>";
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'error',
+        title: 'Failed to upload profile picture.',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+      </script>";
     }
   } else {
-    $profilePicture = $user['profilePicture']; // Keep the old picture if no new picture is uploaded
+    $profilePicture = $user['profilePicture'];
   }
 
   // Update user details in the database
@@ -94,30 +103,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
   $stmt->bind_param("sssssssi", $firstName, $lastName, $birthday, $gender, $phoneNumber, $email, $profilePicture, $userId);
 
   if ($stmt->execute()) {
+    // Update session with new values
+    $_SESSION['firstName'] = $firstName;
+    $_SESSION['lastName'] = $lastName;
+    $_SESSION['email'] = $email;
+    $_SESSION['birthday'] = $birthday;
+    $_SESSION['gender'] = $gender;
+    $_SESSION['phoneNumber'] = $phoneNumber;
+    $_SESSION['profilePicture'] = $profilePicture;
+
     echo "<script>
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Profile updated successfully.',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        }).then(() => {
-            window.location = 'users-profile.php';
-        });
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Profile updated successfully.',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    }).then(() => {
+      window.location = 'users-profile.php';
+    });
     </script>";
   } else {
     echo "<script>
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: 'Error updating profile. Please try again.',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'error',
+      title: 'Error updating profile. Please try again.',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
     </script>";
   }
 }
@@ -165,17 +183,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
 
         if ($stmt->execute()) {
           echo "<script>
-    Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'success',
-        title: 'Password changed successfully.',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true
-    }).then(() => {
-        window.location = 'users-profile.php#profile-change-password';
-    });
+Swal.fire({
+  toast: true,
+  position: 'top-end',
+  icon: 'success',
+  title: 'Password changed successfully.',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true
+}).then(() => {
+  window.location = 'users-profile.php#profile-change-password';
+});
 </script>";
         } else {
           $errorMessage = "Error updating password. Please try again.";
@@ -206,7 +224,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
       document.querySelector('[data-bs-target="#profile-change-password"]').click();
     });
   </script>
-
 <?php endif; ?>
 
 <div class="pagetitle">
@@ -303,19 +320,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
             <div class="tab-pane fade profile-edit pt-3" id="profile-edit">
               <!-- Profile Edit Form -->
               <form method="POST" enctype="multipart/form-data">
-                <div class="row mb-3">
-                  <label for="profileImage" class="col-md-4 col-lg-3 col-form-label">Profile Image</label>
-                  <div class="col-md-8 col-lg-9">
-                    <div class="d-flex justify-content-center">
-                      <img src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : './assets/images/user-icon.png' ?>"
-                        alt="Profile"
-                        class="shadow">
-                    </div>
-                    <div class="pt-2">
-                      <input type="file" name="profilePicture" class="form-control">
-                    </div>
-                  </div>
-                </div>
+<div class="row mb-3">
+  <label for="profilePicture" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Profile Image</label>
+  <div class="col-md-8 col-lg-9 text-center">
+    <div style="width: 130px; height: 130px; margin: 0 auto 15px; overflow: hidden; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+      <img id="previewImage"
+        src="<?= $user['profilePicture'] && file_exists($user['profilePicture']) ? htmlspecialchars($user['profilePicture']) : '../../assets/img/default-user.png' ?>" 
+        alt="Profile Picture"
+        style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+    <input type="file" name="profilePicture" id="profilePictureInput" class="form-control mt-2">
+  </div>
+</div>
                 <div class="row mb-3">
                   <label for="firstName" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">First Name</label>
                   <div class="col-md-8 col-lg-9">
@@ -394,6 +410,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
     </div>
   </div>
 </section>
+<script>
+  document.getElementById('profilePictureInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('previewImage').src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
 
 <?php
 include("./includes/footer.php");
