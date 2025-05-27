@@ -14,15 +14,13 @@ $group = $_POST['group'];
 $imageData = null;
 if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
     $imageData = file_get_contents($_FILES['image']['tmp_name']);
-}
-
-if ($imageData === null) {
-    echo json_encode(['success' => false, 'error' => 'Cannot add without image']);
+} else {
+    echo json_encode(['success' => false, 'error' => "Can't add without image"]);
     exit;
 }
 
 $stmt = $conn->prepare("INSERT INTO inventory (genericName, brandName, milligram, dosageForm, quantity, price, `group`, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$stmt->bind_param("ssisisbs", $genericName, $brandName, $milligram, $dosageForm, $quantity, $price, $group, $imageData);
+$stmt->bind_param("ssssidsb", $genericName, $brandName, $milligram, $dosageForm, $quantity, $price, $group, $imageData);
 $stmt->send_long_data(7, $imageData);
 
 if ($stmt->execute()) {

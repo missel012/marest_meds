@@ -1,20 +1,16 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 include("../../dB/config.php");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $inventoryId = $_POST['inventoryId'];
 
-    $query = "DELETE FROM inventory WHERE inventoryId=?";
-    $stmt = $conn->prepare($query);
+    $stmt = $conn->prepare("DELETE FROM inventory WHERE inventoryId = ?");
     $stmt->bind_param("i", $inventoryId);
 
     if ($stmt->execute()) {
         echo json_encode(['success' => true]);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Database error: ' . $stmt->error]);
+        echo json_encode(['success' => false, 'error' => $stmt->error]);
     }
 
     $stmt->close();
