@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 include("../../dB/config.php");
+include("../../auth/authentication.php"); // Include authentication to access session data
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -8,6 +9,15 @@ if (!$data) {
     echo json_encode(['success' => false, 'message' => 'Invalid input data.']);
     exit;
 }
+
+// Ensure the user is authenticated
+if (!isAuthenticated()) {
+    echo json_encode(['success' => false, 'message' => 'User not authenticated.']);
+    exit;
+}
+
+// Get the userId from the session
+$userId = $_SESSION['userId']; // Assuming `userId` is stored in the session during login
 
 $cart = $data['cart'];
 $address = $data['address'];
@@ -25,9 +35,8 @@ try {
     $orderId = $conn->insert_id;
 
     // Insert into `track_order` table
-    $placeholderUserId = 1; // Temporary userId until authentication is implemented
     $stmtTrackOrder = $conn->prepare("INSERT INTO track_order (orderId, userId, status, orderDateTime, estimatedDelivery) VALUES (?, ?, 'ordered', ?, ?)");
-    $stmtTrackOrder->bind_param("iiss", $orderId, $placeholderUserId, $orderDateTime, $estimatedDelivery);
+    $stmtTrackOrder->bind_param("iiss", $orderId, $userId, $orderDateTime, $estimatedDelivery); // Use the actual userId
     $stmtTrackOrder->execute();
     $trackId = $conn->insert_id;
 
