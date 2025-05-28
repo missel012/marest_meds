@@ -7,90 +7,85 @@ include("./includes/topbar.php");
 include("./includes/sidebar.php");
 include("../../dB/config.php");
 ?>
+<?php
 
-<div class="container mt-4">
-  <div class="card shadow">
-    <div class="card-header" style="background-color: #6ccf54; color: white;">
-      <h4 class="mb-0">➕ Add Order</h4>
-    </div>
-    <div class="card-body">
-      <form action="add_order_process.php" method="POST" id="orderForm">
-        <!-- Customer Name -->
-        <div class="mb-3">
-          <label class="form-label">Customer Name</label>
-          <input type="text" class="form-control" name="customer_name"
-            value="<?= htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']) ?>" readonly>
-        </div>
+$userId = 1; // Hardcoded for now. Change dynamically based on session/login.
 
-        <!-- Select Item -->
-        <div class="mb-3">
-          <label class="form-label">Select Item</label>
-          <select class="form-select" name="medicine_id" id="medicineSelect" required>
-            <option value="" disabled selected>-- Select Medicine --</option>
-            <?php
-            $query = "SELECT inventoryId, brandName, quantity FROM inventory";
-            $result = mysqli_query($conn, $query);
-            while ($row = mysqli_fetch_assoc($result)) {
-              $id = $row['inventoryId'];
-              $brand = htmlspecialchars($row['brandName']);
-              $stock = (int)$row['quantity'];
-              echo "<option value='$id' data-stock='$stock'>$brand (Stock: $stock)</option>";
-            }
-            ?>
-          </select>
-        </div>
+// Fetch orders
+$ordersQuery = "
+    SELECT t.trackId, t.orderId, t.status, t.orderDateTime, t.estimatedDelivery, t.cancelReason
+    FROM track_order t
+    WHERE t.userId = $userId
+    ORDER BY t.orderDateTime DESC
+";
+$ordersResult = $conn->query($ordersQuery);
+?>
 
-        <!-- Quantity Input -->
-        <div class="mb-3">
-          <label class="form-label">Quantity</label>
-          <input type="number" class="form-control" name="quantity" id="quantityInput" min="1" required>
-          <div id="stockWarning" class="form-text text-danger d-none">⚠️ Over the limit</div>
-        </div>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Track Orders</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+        .order-box { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: capitalize; }
+        .ordered { background: orange; color: white; }
+        .processing { background: gold; }
+        .shipping { background: blue; color: white; }
+        .delivered { background: green; color: white; }
+        .completed { background: darkgreen; color: white; }
+        .cancelled, .rejected { background: red; color: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
 
-        <!-- Order Date -->
-        <div class="mb-3">
-          <label class="form-label">Order Date</label>
-          <input type="date" class="form-control" name="order_date" value="<?= date('Y-m-d') ?>" required>
-        </div>
+<h2>🛒 Your Orders</h2>
 
-        <!-- Buttons -->
-        <button type="submit" class="btn btn-primary" id="submitBtn">Save Order</button>
-        <a href="orders_list.php" class="btn btn-secondary">Cancel</a>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- JavaScript for Stock Limit Validation -->
-<script>
-  const medicineSelect = document.getElementById('medicineSelect');
-  const quantityInput = document.getElementById('quantityInput');
-  const warning = document.getElementById('stockWarning');
-  const submitBtn = document.getElementById('submitBtn');
-
-  medicineSelect.addEventListener('change', () => {
-    quantityInput.value = '';
-    quantityInput.classList.remove('is-invalid');
-    warning.classList.add('d-none');
-    submitBtn.disabled = false;
-  });
-
-  quantityInput.addEventListener('input', () => {
-    const selected = medicineSelect.options[medicineSelect.selectedIndex];
-    const stock = parseInt(selected.getAttribute('data-stock'));
-    const quantity = parseInt(quantityInput.value);
-
-    if (quantity > stock) {
-      quantityInput.classList.add('is-invalid');
-      warning.classList.remove('d-none');
-      submitBtn.disabled = true;
-    } else {
-      quantityInput.classList.remove('is-invalid');
-      warning.classList.add('d-none');
-      submitBtn.disabled = false;
+<?php
+while ($order = $ordersResult->fetch_assoc()) {
+    $trackId = $order['trackId'];
+    echo "<div class='order-box'>";
+    echo "<strong>Order #{$order['orderId']}</strong><br>";
+    echo "Date: " . date("M d, Y h:i A", strtotime($order['orderDateTime'])) . "<br>";
+    echo "Estimated Delivery: " . ($order['estimatedDelivery'] ?: "N/A") . "<br>";
+    echo "Status: <span class='status-badge {$order['status']}'>{$order['status']}</span><br>";
+    
+    if ($order['cancelReason']) {
+        echo "<strong>❌ Cancel Reason:</strong> " . htmlspecialchars($order['cancelReason']) . "<br>";
     }
-  });
-</script>
+
+    // Fetch items
+    $itemsQuery = "
+        SELECT oi.genericName, oi.brandName, oi.milligram, oi.dosageForm, oi.quantity, oi.price, oi.total
+        FROM order_items oi
+        WHERE oi.orderId = {$order['orderId']}
+    ";
+    $itemsResult = $conn->query($itemsQuery);
+    
+    echo "<table>";
+    echo "<tr><th>Generic</th><th>Brand</th><th>Dosage</th><th>Form</th><th>Qty</th><th>Price</th><th>Total</th></tr>";
+    while ($item = $itemsResult->fetch_assoc()) {
+        echo "<tr>
+            <td>{$item['genericName']}</td>
+            <td>{$item['brandName']}</td>
+            <td>{$item['milligram']} mg</td>
+            <td>{$item['dosageForm']}</td>
+            <td>{$item['quantity']}</td>
+            <td>₱" . number_format($item['price'], 2) . "</td>
+            <td>₱" . number_format($item['total'], 2) . "</td>
+        </tr>";
+    }
+    echo "</table>";
+    echo "</div>";
+}
+?>
+
+</body>
+</html>
+
 
 <?php
 include("./includes/footer.php");
