@@ -35,7 +35,7 @@
 
 .about-rectangle .tagline {
   font-size: 20px;
-  color:rgb(12, 213, 22); /* New tagline color */
+  color:rgb(255, 52, 25); /* New tagline color */
   margin-bottom: 22px;
   font-weight: bold;
 }
@@ -75,7 +75,7 @@
   <h1>
   <span style="color:#e53935;">About</span> <span style="color:#7ed957;">Us</span>
 </h1>
-  <div class="tagline">Your trusted partner in health and wellness.</div>
+
   <p>
   <strong><span style="color:#e53935;">Marest</span> <span style="color:#7ed957;">Meds</span></strong> was established with a clear mission: to make healthcare more accessible, affordable, and convenient for everyone. We believe that good health is the foundation of a happy and productive life. That’s why we are dedicated to providing quality healthcare products and services that are easy to access, especially for those who need them the most.
 </p>
