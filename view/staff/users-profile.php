@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['updateProfile'])) {
       timer: 3000,
       timerProgressBar: true
     }).then(() => {
-      window.location = 'profile.php';
+      window.location = 'users-profile.php';
     });
     </script>";
   } else {
