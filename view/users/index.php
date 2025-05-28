@@ -249,9 +249,56 @@ while ($row = mysqli_fetch_assoc($result)) {
       <span>Extra Medicine</span>
     </div>
   </div>
-</section>
+</div>
 
-  
-</body>
-</html>
+<?php include("./includes/footer.php"); ?>
 
+<!-- Bootstrap Icons (add this if not already included) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+    .pagetitle h1 {
+        font-weight: 700;
+        color: #2a8c7c;
+    }
+    .card-button {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    }
+
+    .card-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-button .card-body {
+        margin-top: 2rem;
+        padding: 0;
+    }
+
+    .card-button .card-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 0.2rem;
+    }
+
+    .card-button .card-text {
+        display: none; /* Optional: hide for cleaner circular UI */
+    }
+
+
+    .list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+    font-size: 1rem;
+  }
+
+</style>
