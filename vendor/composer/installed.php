@@ -3,7 +3,11 @@
         'name' => '__root__',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
+<<<<<<< HEAD
         'reference' => 'c736c7db48f04a6bc68a07a2ae54e5c839c3c05e',
+=======
+        'reference' => '66fae3c2f219ed8fb37bb2fe43cb068696ff483d',
+>>>>>>> origin/Mai
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +17,11 @@
         '__root__' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
+<<<<<<< HEAD
             'reference' => 'c736c7db48f04a6bc68a07a2ae54e5c839c3c05e',
+=======
+            'reference' => '66fae3c2f219ed8fb37bb2fe43cb068696ff483d',
+>>>>>>> origin/Mai
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
