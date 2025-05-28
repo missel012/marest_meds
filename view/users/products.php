@@ -564,7 +564,7 @@ include("./includes/footer.php");
                 stockQuantity: quantity,
                 genericName: genericName,
                 brandName: brandName,
-                group: group,
+                group: group
             };
         }
         if (cart[itemName].quantity < originalQuantity) {

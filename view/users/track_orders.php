@@ -6,7 +6,7 @@ include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
 include("../../dB/config.php");
-include("../../auth/authentication.php"); // Ensure this file contains your authentication logic
+include("../../auth/authentication.php"); // Include authentication file to access session data
 
 // Ensure the user is authenticated
 $email = isset($_SESSION['email']) ? $_SESSION['email'] : null;
@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     }
 }
 
-// Fetch orders — exclude all canceled orders so none appear
+// Load orders — exclude all canceled orders so none appear
 $ordersQuery = "
     SELECT t.trackId, t.orderId, t.status, t.orderDateTime, t.estimatedDelivery, t.cancelReason
     FROM track_order t
@@ -90,116 +90,105 @@ $ordersQuery = "
 $ordersResult = $conn->query($ordersQuery);
 ?>
 
-<div class="pagetitle">
-    <div class="d-flex justify-content-between align-items-center">
-        <h1>Track Orders</h1>
-    </div>
-    <nav>
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-            <li class="breadcrumb-item active"><a href="track_orders.php">Track Orders</a></li>
-        </ol>
-    </nav>
-</div><!-- End Page Title -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Track Orders</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+        .order-box { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: capitalize; }
+        .ordered { background: orange; color: white; }
+        .processing { background: gold; }
+        .shipping { background: blue; color: white; }
+        .delivered { background: green; color: white; }
+        .completed { background: darkgreen; color: white; }
+        .cancelled, .rejected { background: red; color: white; }
+        .cancel-btn {
+            background: #d9534f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .cancel-btn:hover {
+            background: #c9302c;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
 
-<section class="section">
-    <div class="row">
-        <div class="col-lg-12">
-            <?php if ($ordersResult->num_rows === 0): ?>
-                <div class="alert alert-info text-center" role="alert">
-                    You have no active orders.
-                </div>
-            <?php else: ?>
-                <?php while ($order = $ordersResult->fetch_assoc()): ?>
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">Order #<?= htmlspecialchars($order['orderId']) ?></h5>
-                            <p class="card-text">
-                                <strong>Date:</strong> <?= date("M d, Y h:i A", strtotime($order['orderDateTime'])) ?><br>
-                                <strong>Estimated Delivery:</strong> <?= $order['estimatedDelivery'] ? htmlspecialchars($order['estimatedDelivery']) : "N/A" ?><br>
-                                <strong>Status:</strong> <span class="badge bg-warning text-dark"><?= htmlspecialchars($order['status']) ?></span>
-                            </p>
+<h2>🛒 Your Orders</h2>
 
-                            <?php if ($order['cancelReason']): ?>
-                                <p class="text-danger"><strong>❌ Cancel Reason:</strong> <?= htmlspecialchars($order['cancelReason']) ?></p>
-                            <?php endif; ?>
+<?php if ($ordersResult->num_rows === 0): ?>
+    <p>You have no active orders.</p>
+<?php else: ?>
+    <?php while ($order = $ordersResult->fetch_assoc()): ?>
+        <div class="order-box">
+            <strong>Order #<?= htmlspecialchars($order['orderId']) ?></strong><br>
+            Date: <?= date("M d, Y h:i A", strtotime($order['orderDateTime'])) ?><br>
+            Estimated Delivery: <?= $order['estimatedDelivery'] ? htmlspecialchars($order['estimatedDelivery']) : "N/A" ?><br>
+            Status: <span class="status-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span><br>
 
-                            <?php if (in_array($order['status'], ['ordered', 'processing'])): ?>
-                                <button class="btn btn-outline-danger btn-sm" onclick="confirmCancel(<?= (int)$order['trackId'] ?>)">Cancel Order</button>
-                            <?php endif; ?>
-
-                            <table class="table table-bordered mt-3">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Image</th> <!-- Added a column for the image -->
-                                        <th>Generic</th>
-                                        <th>Brand</th>
-                                        <th>Dosage</th>
-                                        <th>Form</th>
-                                        <th>Qty</th>
-                                        <th>Price</th>
-                                        <th>Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $itemsQuery = "
-            SELECT oi.genericName, oi.brandName, oi.milligram, oi.dosageForm, oi.quantity, oi.price, oi.total, i.image
-            FROM order_items oi
-            LEFT JOIN inventory i ON oi.inventoryId = i.inventoryId
-            WHERE oi.orderId = {$order['orderId']}
-        ";
-                                    $itemsResult = $conn->query($itemsQuery);
-                                    while ($item = $itemsResult->fetch_assoc()):
-                                    ?>
-                                        <tr>
-                                            <td>
-                                                <?php if (!empty($item['image'])): ?>
-                                                    <img src="data:image/jpeg;base64,<?= base64_encode($item['image']) ?>"
-                                                        alt="Drug Image"
-                                                        style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;" />
-                                                <?php else: ?>
-                                                    <span>No Image</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?= htmlspecialchars($item['genericName']) ?></td>
-                                            <td><?= htmlspecialchars($item['brandName']) ?></td>
-                                            <td><?= (int)$item['milligram'] ?> mg</td>
-                                            <td><?= htmlspecialchars($item['dosageForm']) ?></td>
-                                            <td><?= (int)$item['quantity'] ?></td>
-                                            <td>₱<?= number_format($item['price'], 2) ?></td>
-                                            <td>₱<?= number_format($item['total'], 2) ?></td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                <?php endwhile; ?>
+            <?php if ($order['cancelReason']): ?>
+                <strong>❌ Cancel Reason:</strong> <?= htmlspecialchars($order['cancelReason']) ?><br>
             <?php endif; ?>
+
+            <?php if (in_array($order['status'], ['ordered', 'processing'])): ?>
+                <button class="cancel-btn" onclick="confirmCancel(<?= (int)$order['trackId'] ?>)">Cancel Order</button>
+            <?php endif; ?>
+
+            <table>
+                <thead>
+                    <tr><th>Generic</th><th>Brand</th><th>Dosage</th><th>Form</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                <?php
+                    $itemsQuery = "
+                        SELECT oi.genericName, oi.brandName, oi.milligram, oi.dosageForm, oi.quantity, oi.price, oi.total
+                        FROM order_items oi
+                        WHERE oi.orderId = {$order['orderId']}
+                    ";
+                    $itemsResult = $conn->query($itemsQuery);
+                    while ($item = $itemsResult->fetch_assoc()):
+                ?>
+                    <tr>
+                        <td><?= htmlspecialchars($item['genericName']) ?></td>
+                        <td><?= htmlspecialchars($item['brandName']) ?></td>
+                        <td><?= (int)$item['milligram'] ?> mg</td>
+                        <td><?= htmlspecialchars($item['dosageForm']) ?></td>
+                        <td><?= (int)$item['quantity'] ?></td>
+                        <td>₱<?= number_format($item['price'], 2) ?></td>
+                        <td>₱<?= number_format($item['total'], 2) ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
-    </div>
-</section>
+    <?php endwhile; ?>
+<?php endif; ?>
 
-<?php
-include("./includes/footer.php");
-?>
+<!-- Hidden form for submitting cancellation -->
+<form id="cancelForm" method="POST" style="display: none;">
+    <input type="hidden" name="trackId" id="trackId">
+    <input type="hidden" name="reason" id="reason">
+    <input type="hidden" name="cancel_order" value="1">
+</form>
 
-<style>
-.table thead th {
-    background-color: #EDFFE9; /* Light green background for the table header */
-}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    function confirmCancel(trackId) {
-        Swal.fire({
-            title: 'Cancel Order',
-            html: `
+function confirmCancel(trackId) {
+    Swal.fire({
+        title: 'Cancel Order',
+        html: `
             <div style="text-align: left;">
                 <label for="reasonSelect">Reason for cancellation:</label><br>
-                <select id="reasonSelect" class="form-select mt-2">
+                <select id="reasonSelect" style="width: 100%; padding: 6px; font-size: 14px; margin-top: 4px;">
                     <option value="" disabled selected>Select a reason</option>
                     <option value="Wrong medicine">Wrong medicine</option>
                     <option value="Changed my mind">Changed my mind</option>
@@ -208,38 +197,45 @@ include("./includes/footer.php");
                     <option value="Delivery taking too long">Delivery taking too long</option>
                     <option value="Other">Other (please specify)</option>
                 </select>
-                <input type="text" id="customReason" class="form-control mt-2" placeholder="Enter your reason" style="display: none;" />
+                <input type="text" id="customReason" placeholder="Enter your reason" 
+                       style="display: none; width: 100%; padding: 6px; font-size: 14px; margin-top: 8px;" />
             </div>
         `,
-            confirmButtonText: 'Submit',
-            showCancelButton: true,
-            preConfirm: () => {
-                const select = document.getElementById('reasonSelect');
-                const input = document.getElementById('customReason');
-                const selected = select.value;
-                const finalReason = selected === 'Other' ? input.value.trim() : selected;
+        width: 400,
+        confirmButtonText: 'Submit',
+        showCancelButton: true,
+        preConfirm: () => {
+            const select = document.getElementById('reasonSelect');
+            const input = document.getElementById('customReason');
+            const selected = select.value;
+            const finalReason = selected === 'Other' ? input.value.trim() : selected;
 
-                if (!finalReason) {
-                    Swal.showValidationMessage('Please provide a reason.');
-                    return false;
-                }
-
-                return finalReason;
-            },
-            didOpen: () => {
-                const select = document.getElementById('reasonSelect');
-                const input = document.getElementById('customReason');
-
-                select.addEventListener('change', () => {
-                    input.style.display = select.value === 'Other' ? 'block' : 'none';
-                });
+            if (!finalReason) {
+                Swal.showValidationMessage('Please provide a reason.');
+                return false;
             }
-        }).then(result => {
-            if (result.isConfirmed) {
-                document.getElementById('trackId').value = trackId;
-                document.getElementById('reason').value = result.value;
-                document.getElementById('cancelForm').submit();
-            }
-        });
-    }
+
+            return finalReason;
+        },
+        didOpen: () => {
+            const select = document.getElementById('reasonSelect');
+            const input = document.getElementById('customReason');
+
+            select.addEventListener('change', () => {
+                input.style.display = select.value === 'Other' ? 'block' : 'none';
+            });
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            document.getElementById('trackId').value = trackId;
+            document.getElementById('reason').value = result.value;
+            document.getElementById('cancelForm').submit();
+        }
+    });
+}
 </script>
+
+</body>
+</html>
+
+<?php include("./includes/footer.php"); ?>
