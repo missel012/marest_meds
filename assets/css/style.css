@@ -755,6 +755,14 @@ h6 {
 
 .sidebar-nav .nav-content a.active i {
   background-color: #4154f1;
+
+
+  .forgot-password-link {
+  font-size: 14px;
+  text-decoration: underline;
+  color: #DB5C79;
+}
+  color: #fff;
 }
 /*--------------------------------------------------------------
 /* Dashboard */
