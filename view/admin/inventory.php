@@ -143,7 +143,7 @@ if ($search != '') {
                             <option value="NSAID">NSAID</option>
                             <option value="other">Other</option>
                         </select>
-                        <input type="text" class="form-control mt-2 d-none" id="otherGroup" placeholder="Please specify">
+                        <input type="text" class="form-control mt-2 d-none" id="otherGroup" name="otherGroup" placeholder="Please specify">
                     </div>
                     <div class="mb-3">
                         <label for="image" class="form-label">Image</label>
@@ -210,16 +210,7 @@ function previewAddImage(event) {
                     </div>
                     <div class="mb-3">
                         <label for="editGroup" class="form-label">Group</label>
-                        <select class="form-select" id="editGroup" name="group" required>
-                            <option value="analgesic">Analgesic</option>
-                            <option value="antibiotic">Antibiotic</option>
-                            <option value="antidiabetic">Antidiabetic</option>
-                            <option value="antihistamine">Antihistamine</option>
-                            <option value="antihypertensive">Antihypertensive</option>
-                            <option value="NSAID">NSAID</option>
-                            <option value="other">Other</option>
-                        </select>
-                        <input type="text" class="form-control mt-2 d-none" id="editOtherGroup" placeholder="Please specify">
+                        <input type="text" class="form-control" id="editGroup" name="group" required>
                     </div>
                     <div class="mb-3">
                         <label for="editImage" class="form-label">Image</label>
@@ -274,25 +265,9 @@ function previewAddImage(event) {
     document.getElementById('addInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
-        const groupSelect = document.getElementById('group');
-        let groupValue = groupSelect.value;
-        if (groupValue === 'other') {
-            groupValue = document.getElementById('otherGroup').value.trim();
+        if (document.getElementById('group').value === 'other') {
+            formData.set('group', document.getElementById('otherGroup').value);
         }
-        // Prevent empty group value
-        if (!groupValue) {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'error',
-                title: 'Group is required!',
-                showConfirmButton: true,
-                timer: 5000,
-                timerProgressBar: true
-            });
-            return;
-        }
-        formData.set('group', groupValue);
 
         fetch('add_inventory.php', {
                 method: 'POST',
@@ -314,21 +289,20 @@ function previewAddImage(event) {
                     return;
                 }
                 if (data.success) {
-                    // Close the modal after successful add
-                    const addModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('addInventoryModal'));
-                    addModal.hide();
-
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
                         title: 'Inventory item added!',
                         showConfirmButton: false,
-                        timer: 1500,
+                        timer: 3000,
                         timerProgressBar: true
-                    }).then(() => {
-                        location.reload();
                     });
+                    setTimeout(function() {
+                        var addModal = bootstrap.Modal.getInstance(document.getElementById('addInventoryModal'));
+                        if (addModal) addModal.hide();
+                        location.reload();
+                    }, 3000);
                 } else {
                     Swal.fire({
                         toast: true,
@@ -368,21 +342,20 @@ function previewAddImage(event) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Close the modal after successful update
-                    const editModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editInventoryModal'));
-                    editModal.hide();
-
                     Swal.fire({
                         toast: true,
                         position: 'top-end',
                         icon: 'success',
                         title: 'Inventory item updated!',
                         showConfirmButton: false,
-                        timer: 1500,
+                        timer: 3000,
                         timerProgressBar: true
-                    }).then(() => {
-                        location.reload();
                     });
+                    setTimeout(function() {
+                        var editModal = bootstrap.Modal.getInstance(document.getElementById('editInventoryModal'));
+                        if (editModal) editModal.hide();
+                        location.reload();
+                    }, 3000);
                 } else {
                     Swal.fire({
                         toast: true,
@@ -426,12 +399,9 @@ function previewAddImage(event) {
                         icon: 'success',
                         title: 'Inventory item deleted!',
                         showConfirmButton: false,
-                        timer: 1500,
+                        timer: 3000,
                         timerProgressBar: true
                     }).then(() => {
-                        // Close the modal after success
-                        const deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteInventoryModal'));
-                        deleteModal.hide();
                         location.reload();
                     });
                 } else {
@@ -460,19 +430,6 @@ function previewAddImage(event) {
             });
     });
 
-    // Edit group select: show/hide other input
-    document.getElementById('editGroup').addEventListener('change', function() {
-        const otherGroupInput = document.getElementById('editOtherGroup');
-        if (this.value === 'other') {
-            otherGroupInput.classList.remove('d-none');
-            otherGroupInput.setAttribute('required', 'required');
-        } else {
-            otherGroupInput.classList.add('d-none');
-            otherGroupInput.removeAttribute('required');
-        }
-    });
-
-    // On show edit modal, fetch and populate fields
     document.addEventListener('DOMContentLoaded', function() {
         const editInventoryModal = document.getElementById('editInventoryModal');
         const deleteInventoryModal = document.getElementById('deleteInventoryModal');
@@ -484,7 +441,6 @@ function previewAddImage(event) {
             fetch('get_inventory.php?id=' + inventoryId)
                 .then(response => response.json())
                 .then(data => {
-                    // Populate all input fields with values from database
                     document.getElementById('editInventoryId').value = data.inventoryId;
                     document.getElementById('editGenericName').value = data.genericName;
                     document.getElementById('editBrandName').value = data.brandName;
@@ -492,33 +448,10 @@ function previewAddImage(event) {
                     document.getElementById('editDosageForm').value = data.dosageForm;
                     document.getElementById('editQuantity').value = data.quantity;
                     document.getElementById('editPrice').value = data.price;
-
-                    // Set group select and handle "other"
-                    const editGroupSelect = document.getElementById('editGroup');
-                    const editOtherGroupInput = document.getElementById('editOtherGroup');
-                    let found = false;
-                    for (let i = 0; i < editGroupSelect.options.length; i++) {
-                        if (editGroupSelect.options[i].value.toLowerCase() === data.group.toLowerCase()) {
-                            editGroupSelect.value = data.group;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        editGroupSelect.value = 'other';
-                        editOtherGroupInput.classList.remove('d-none');
-                        editOtherGroupInput.value = data.group;
-                        editOtherGroupInput.setAttribute('required', 'required');
-                    } else {
-                        editOtherGroupInput.classList.add('d-none');
-                        editOtherGroupInput.value = '';
-                        editOtherGroupInput.removeAttribute('required');
-                    }
-
-                    // Show current image preview if available (image is BLOB base64)
+                    document.getElementById('editGroup').value = data.group;
+                    // Show current image preview if available (image is in database as filename)
                     if (data.image) {
-                        document.getElementById('currentImagePreview').innerHTML =
-                            `<img src="data:image/jpeg;base64,${data.image}" alt="Current Image" style="width:50px;height:50px;object-fit:cover;">`;
+                        document.getElementById('currentImagePreview').innerHTML = `<img src="../../uploads/${data.image}" alt="Current Image" style="width:50px;height:50px;object-fit:cover;">`;
                     } else {
                         document.getElementById('currentImagePreview').innerHTML = `<span class="text-muted">No Image</span>`;
                     }
@@ -531,7 +464,7 @@ function previewAddImage(event) {
             const inventoryId = button.getAttribute('data-id');
             document.getElementById('deleteInventoryId').value = inventoryId;
         });
-    });
+    }); 
 </script>
 
 <?php include("./includes/footer.php"); ?>
