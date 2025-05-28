@@ -171,7 +171,7 @@ $result = mysqli_query($conn, $query);
 
       <div class="card">
         <div class="card-body">
-          <h5 class="card-title">List of Staffs in Carmen Branch</h5>
+          <h5 class="card-title">List of Staffs</h5>
 
           <div class="d-flex justify-content-between mb-3">
             <div>

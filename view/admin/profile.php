@@ -192,7 +192,7 @@ Swal.fire({
   timer: 3000,
   timerProgressBar: true
 }).then(() => {
-  window.location = 'users-profile.php#profile-change-password';
+  window.location = 'profile.php#profile-change-password';
 });
 </script>";
         } else {

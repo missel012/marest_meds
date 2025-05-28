@@ -7,7 +7,10 @@ include("../../dB/config.php"); // Ensure this file contains your database conne
 // Get search input
 $searchTerm = isset($_GET['search']) ? '%' . $_GET['search'] . '%' : '%';
 
-// Update query to filter by search term
+// Get date filter input
+$dateFilter = isset($_GET['group_by_date']) && $_GET['group_by_date'] !== '' ? $_GET['group_by_date'] : null;
+
+// Update query to filter by search term and date
 $query = "
     SELECT 
         o.orderId, 
@@ -29,14 +32,20 @@ $query = "
     ON 
         o.orderId = oi.orderId
     WHERE 
-        oi.genericName LIKE ? 
+        (oi.genericName LIKE ? 
         OR oi.brandName LIKE ? 
-        OR oi.group LIKE ?
+        OR oi.group LIKE ?)
+        " . ($dateFilter ? " AND DATE(o.datetime) = ?" : "") . "
     ORDER BY 
         o.datetime DESC, oi.orderItemId ASC
 ";
-$stmt = $conn->prepare($query);
-$stmt->bind_param("sss", $searchTerm, $searchTerm, $searchTerm);
+if ($dateFilter) {
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ssss", $searchTerm, $searchTerm, $searchTerm, $dateFilter);
+} else {
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("sss", $searchTerm, $searchTerm, $searchTerm);
+}
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -174,9 +183,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
       </button>
     </div>
   </form>
-
   <div class="col-md-4">
-    <button class="btn btn-primary w-100" style="background: #DB5C79; border: none" data-bs-toggle="modal" data-bs-target="#addOrderModal">Add Order Transaction</button>
+    <form method="GET" action="orders_prescription.php" class="d-flex">
+      <select name="group_by_date" class="form-select me-2">
+        <option value="">All Dates</option>
+        <?php
+        // Get unique dates for dropdown
+        $dateQuery = "SELECT DISTINCT DATE(datetime) as order_date FROM `order` ORDER BY order_date DESC";
+        $dateResult = mysqli_query($conn, $dateQuery);
+        while ($dateRow = mysqli_fetch_assoc($dateResult)) {
+          $selected = (isset($_GET['group_by_date']) && $_GET['group_by_date'] == $dateRow['order_date']) ? 'selected' : '';
+          echo '<option value="' . htmlspecialchars($dateRow['order_date']) . '" ' . $selected . '>' . htmlspecialchars($dateRow['order_date']) . '</option>';
+        }
+        ?>
+      </select>
+      <button type="submit" class="btn btn-secondary">Filter</button>
+    </form>
   </div>
 </div>
 
@@ -263,7 +285,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <th scope="col">Group</th>
                 <th scope="col">Total</th>
                 <th scope="col">Date and Time</th>
-                <th scope="col">Actions</th>
+                <!-- Removed Actions column -->
               </tr>
             </thead>
             <tbody>
@@ -278,12 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                   <td>₱<?= number_format($order['items'][0]['price'], 2) ?></td>
                   <td><?= htmlspecialchars($order['items'][0]['group']) ?></td>
                   <td>₱<?= number_format($order['items'][0]['total'], 2) ?></td>
-                  <td><?= htmlspecialchars($order['datetime']) ?></td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteOrderModal" data-id="<?= $orderId ?>">
-                      <i class="bi bi-trash-fill"></i>
-                    </button>
-                  </td>
+                  <td><?= htmlspecialchars($order['dateordetime']) ?></td>
+                  <!-- Removed delete button -->
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -320,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 <th scope="col">Group</th>
                 <th scope="col">Total</th>
                 <th scope="col">Date and Time</th>
-                <th scope="col">Actions</th>
+                <!-- Removed Actions column -->
               </tr>
             </thead>
             <tbody>
@@ -335,12 +353,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                   <td>₱<?= number_format($order['items'][0]['price'], 2) ?></td>
                   <td><?= htmlspecialchars($order['items'][0]['group']) ?></td>
                   <td>₱<?= number_format($order['items'][0]['total'], 2) ?></td>
-                  <td><?= htmlspecialchars($order['datetime']) ?></td>
-                  <td>
-                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteOrderModal" data-id="<?= $orderId ?>">
-                      <i class="bi bi-trash-fill"></i>
-                    </button>
-                  </td>
+                  <td><?= htmlspecialchars($order['dateordetime']) ?></td>
+                  <!-- Removed delete button -->
                 </tr>
               <?php endforeach; ?>
             </tbody>
