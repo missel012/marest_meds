@@ -3,7 +3,7 @@
 $servername = "localhost";
 $username = "root";
 $password = "";
-$database = "datahan_eblacas";
+$database = "marest_meds";
 
 $conn = new mysqli($servername, $username, $password, $database);
 
