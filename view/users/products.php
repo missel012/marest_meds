@@ -456,68 +456,79 @@ include("./includes/footer.php");
     }
 
     async function addToCart(genericName, brandName, itemPrice, group, inventoryId, imageBase64) {
-    await fetchLatestOrderId(); // Fetch updated Order ID before adding to cart
+        await fetchLatestOrderId(); // Fetch updated Order ID before adding to cart
 
-    console.log("Adding to cart:", {
-        genericName,
-        brandName,
-        itemPrice,
-        group,
-        inventoryId
-    });
+        console.log("Adding to cart:", {
+            genericName,
+            brandName,
+            itemPrice,
+            group,
+            inventoryId
+        });
 
-    const itemName = `${genericName} ${brandName}`;
-    const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
-    console.log("Stock elements found:", stockElements);
+        const itemName = `${genericName} ${brandName}`;
+        const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
+        console.log("Stock elements found:", stockElements);
 
-    if (stockElements.length === 0) {
-        console.error(`No stock element found for inventoryId: ${inventoryId}`);
-        return; // Exit the function if no stock element is found
-    }
+        if (stockElements.length === 0) {
+            console.error(`No stock element found for inventoryId: ${inventoryId}`);
+            return; // Exit the function if no stock element is found
+        }
 
-    const originalQuantity = parseInt(stockElements[0].innerText);
-    console.log("Original quantity:", originalQuantity);
+        const originalQuantity = parseInt(stockElements[0].innerText);
+        console.log("Original quantity:", originalQuantity);
 
-    if (!cart[itemName]) {
-        cart[itemName] = {
-            quantity: 0,
-            price: parseFloat(itemPrice),
-            inventoryId: inventoryId,
-            medicineGroup: group,
-            originalQuantity: originalQuantity,
-            image: imageBase64 // Add the image to the cart object
-        };
-    }
-    if (cart[itemName].quantity < originalQuantity) {
-        cart[itemName].quantity++;
-        updateStock(inventoryId, -1);
-        updateCart();
+        if (!cart[itemName]) {
+            cart[itemName] = {
+                quantity: 0,
+                price: parseFloat(itemPrice),
+                inventoryId: inventoryId,
+                medicineGroup: group,
+                originalQuantity: originalQuantity,
+                image: imageBase64 // Add the image to the cart object
+            };
+        }
+        if (cart[itemName].quantity < originalQuantity) {
+            cart[itemName].quantity++;
+            updateStock(inventoryId, -1);
+            updateCart();
 
-        // Update the modal's stock display
-        const modalStockElement = document.getElementById('modalStock');
-        if (modalStockElement) {
-            const currentStock = parseInt(modalStockElement.textContent.split(': ')[1]);
-            modalStockElement.textContent = `Quantity in Stock: ${currentStock - 1}`;
+            // Update the modal's stock display
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Item added to cart!',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+
+            // Update the modal's stock display
+            const modalStockElement = document.getElementById('modalStock');
+            if (modalStockElement) {
+                const currentStock = parseInt(modalStockElement.textContent.split(': ')[1]);
+                modalStockElement.textContent = `Quantity in Stock: ${currentStock - 1}`;
+            }
         }
     }
-}
 
-function updateCart() {
-    const cartItems = document.getElementById('cart-items');
-    const cartSummary = document.getElementById('cart-summary');
-    const totalAmount = document.getElementById('total-amount');
-    const deleteBtn = document.getElementById('delete-btn'); // Reference delete button
-    let total = 0;
+    function updateCart() {
+        const cartItems = document.getElementById('cart-items');
+        const cartSummary = document.getElementById('cart-summary');
+        const totalAmount = document.getElementById('total-amount');
+        const deleteBtn = document.getElementById('delete-btn'); // Reference delete button
+        let total = 0;
 
-    cartItems.innerHTML = '';
+        cartItems.innerHTML = '';
 
-    for (const itemName in cart) {
-        const item = cart[itemName];
-        const totalPrice = item.quantity * item.price;
-        total += totalPrice;
+        for (const itemName in cart) {
+            const item = cart[itemName];
+            const totalPrice = item.quantity * item.price;
+            total += totalPrice;
 
-        // Add the cart item with the image at the top
-        cartItems.innerHTML += `
+            // Add the cart item with the image at the top
+            cartItems.innerHTML += `
         <div class="cart-item">
             <div class="item-image">
                 <img src="data:image/jpeg;base64,${item.image}" alt="${itemName}" class="img-fluid mb-2" style="width: 100%; max-width: 100px; height: auto; object-fit: cover; border-radius: 0.5rem;" />
@@ -536,27 +547,27 @@ function updateCart() {
             </div>
         </div>
         `;
-    }
+        }
 
-    // Add the "Print Receipt" button only if there are items in the cart
-    if (Object.keys(cart).length > 0) {
-        cartItems.innerHTML += `
+        // Add the "Print Receipt" button only if there are items in the cart
+        if (Object.keys(cart).length > 0) {
+            cartItems.innerHTML += `
         <div class="d-flex justify-content-between">
             <button type="button" class="btn btn-outline-primary" id="print-receipt-btn" onclick="showReceipt()">Print Receipt</button>
         </div>
         `;
-    }
+        }
 
-    totalAmount.innerText = `₱${total.toFixed(2)}`;
-    cartSummary.style.display = 'none'; // Hide the cart summary initially
+        totalAmount.innerText = `₱${total.toFixed(2)}`;
+        cartSummary.style.display = 'none'; // Hide the cart summary initially
 
-    // Show delete button if cart has items, hide otherwise
-    if (Object.keys(cart).length > 0) {
-        deleteBtn.style.display = "block";
-    } else {
-        deleteBtn.style.display = "none";
+        // Show delete button if cart has items, hide otherwise
+        if (Object.keys(cart).length > 0) {
+            deleteBtn.style.display = "block";
+        } else {
+            deleteBtn.style.display = "none";
+        }
     }
-}
 
     function updateStock(inventoryId, change) {
         const stockElements = document.querySelectorAll(`#stock-${inventoryId}`);
@@ -597,31 +608,31 @@ function updateCart() {
     }
 
     function showDrugDetails(imageBase64, genericName, brandName, milligram, dosageForm, group, quantity, price, inventoryId) {
-    const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
+        const imageSrc = `data:image/jpeg;base64,${imageBase64}`;
 
-    document.getElementById('modalDrugImage').src = imageSrc;
-    document.getElementById('modalDrugName').textContent = `${genericName} ${brandName}`;
-    document.getElementById('modalDosage').textContent = `Dosage: ${milligram} mg - ${dosageForm}`;
-    document.getElementById('modalGroup').textContent = `Group: ${group}`;
+        document.getElementById('modalDrugImage').src = imageSrc;
+        document.getElementById('modalDrugName').textContent = `${genericName} ${brandName}`;
+        document.getElementById('modalDosage').textContent = `Dosage: ${milligram} mg - ${dosageForm}`;
+        document.getElementById('modalGroup').textContent = `Group: ${group}`;
 
-    // Calculate the updated stock based on the cart
-    const itemName = `${genericName} ${brandName}`;
-    const cartQuantity = cart[itemName] ? cart[itemName].quantity : 0;
-    const updatedQuantity = quantity - cartQuantity;
+        // Calculate the updated stock based on the cart
+        const itemName = `${genericName} ${brandName}`;
+        const cartQuantity = cart[itemName] ? cart[itemName].quantity : 0;
+        const updatedQuantity = quantity - cartQuantity;
 
-    document.getElementById('modalStock').textContent = `Quantity in Stock: ${updatedQuantity}`;
-    document.getElementById('modalPrice').textContent = `Price: ₱${price}`;
+        document.getElementById('modalStock').textContent = `Quantity in Stock: ${updatedQuantity}`;
+        document.getElementById('modalPrice').textContent = `Price: ₱${price}`;
 
-    // Debugging log to ensure inventoryId is correct
-    console.log("Inventory ID passed to modal:", inventoryId);
+        // Debugging log to ensure inventoryId is correct
+        console.log("Inventory ID passed to modal:", inventoryId);
 
-    // Dynamically set the onclick handler for the Add to Cart button
-    const addToCartBtn = document.getElementById('modalAddToCartBtn');
-    addToCartBtn.onclick = function() {
-        addToCart(genericName, brandName, price, group, inventoryId, imageBase64);
-    };
+        // Dynamically set the onclick handler for the Add to Cart button
+        const addToCartBtn = document.getElementById('modalAddToCartBtn');
+        addToCartBtn.onclick = function() {
+            addToCart(genericName, brandName, price, group, inventoryId, imageBase64);
+        };
 
-    const modal = new bootstrap.Modal(document.getElementById('drugDetailModal'));
-    modal.show();
-}
+        const modal = new bootstrap.Modal(document.getElementById('drugDetailModal'));
+        modal.show();
+    }
 </script>
