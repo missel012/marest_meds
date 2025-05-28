@@ -61,11 +61,6 @@ if (isset($_SESSION['email'])) {
 
     <li class="nav-item dropdown">
 
-      <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
-        <i class="bi bi-bell" style="color:rgb(0, 0, 0) !important;"></i> <!-- Changed icon color with !important -->
-        <span class="badge bg-primary badge-number" style="background-color: #DB5C79 !important;">4</span> <!-- Changed badge color with !important -->
-      </a><!-- End Notification Icon -->
-
       <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
         <li class="dropdown-header">
           You have 4 new notifications
