@@ -77,7 +77,7 @@
 </h1>
 
   <p>
-  <strong><span style="color:#e53935;">Marest</span> <span style="color:#7ed957;">Meds</span></strong> was established with a clear mission: to make healthcare more accessible, affordable, and convenient for everyone. We believe that good health is the foundation of a happy and productive life. That’s why we are dedicated to providing quality healthcare products and services that are easy to access, especially for those who need them the most.
+  Our Platform was established with a clear mission: to make healthcare more accessible, affordable, and convenient for everyone. We believe that good health is the foundation of a happy and productive life. That’s why we are dedicated to providing quality healthcare products and services that are easy to access, especially for those who need them the most.
 </p>
 
 <p>
