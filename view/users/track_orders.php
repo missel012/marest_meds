@@ -6,6 +6,45 @@ include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
 include("../../dB/config.php");
+include("../../auth/authentication.php"); // Include authentication file to access session data
+
+// Ensure the user is authenticated
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : null;
+if (!$email) {
+    echo "<script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Unauthorized',
+            text: 'Please log in to view your orders.',
+            showConfirmButton: true
+        }).then(() => {
+            window.location.href = '/IT322/login.php';
+        });
+    </script>";
+    exit;
+}
+
+// Fetch userId using the email
+$stmtFetchUserId = $conn->prepare("SELECT userId FROM users WHERE email = ?");
+$stmtFetchUserId->bind_param("s", $email);
+$stmtFetchUserId->execute();
+$stmtFetchUserId->bind_result($userId);
+$stmtFetchUserId->fetch();
+$stmtFetchUserId->close();
+
+if (!$userId) {
+    echo "<script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'User not found.',
+            showConfirmButton: true
+        }).then(() => {
+            window.location.href = '/IT322/login.php';
+        });
+    </script>";
+    exit;
+}
 
 // Cancel logic – runs before HTML renders
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
@@ -15,22 +54,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     $updateQuery = "
         UPDATE track_order
         SET status = 'cancelled', cancelReason = '$reason'
-        WHERE trackId = $trackId AND status IN ('ordered', 'processing')
+        WHERE trackId = $trackId AND userId = $userId AND status IN ('ordered', 'processing')
     ";
 
     if ($conn->query($updateQuery)) {
-    echo "<script>
-        window.onload = function() {
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'success',
-                title: 'Order cancelled successfully!',
-                showConfirmButton: false,
-                timer: 1500
-            }).then(() => location.href = window.location.href);
-        };
-    </script>";
+        echo "<script>
+            window.onload = function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Order cancelled successfully!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => location.href = window.location.href);
+            };
+        </script>";
     } else {
         echo "<script>
             window.onload = function() {
@@ -41,7 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
 }
 
 // Load orders — exclude all canceled orders so none appear
-$userId = 1; // Replace with your session user ID
 $ordersQuery = "
     SELECT t.trackId, t.orderId, t.status, t.orderDateTime, t.estimatedDelivery, t.cancelReason
     FROM track_order t
