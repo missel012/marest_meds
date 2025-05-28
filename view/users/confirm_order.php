@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 include("../../dB/config.php");
-include("../../auth/authentication.php"); // Include authentication to access session data
+include("../../auth/authentication.php"); // Include authentication file to access session data
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -10,33 +10,43 @@ if (!$data) {
     exit;
 }
 
-// Ensure the user is authenticated
-if (!isAuthenticated()) {
-    echo json_encode(['success' => false, 'message' => 'User not authenticated.']);
-    exit;
-}
-
-// Get the userId from the session
-$userId = $_SESSION['userId']; // Assuming `userId` is stored in the session during login
-
 $cart = $data['cart'];
 $address = $data['address'];
 $phoneNumber = $data['phoneNumber'];
 $orderDateTime = $data['orderDateTime'];
 $estimatedDelivery = $data['estimatedDelivery'];
 
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : null;
+if (!$email) {
+    echo json_encode(['success' => false, 'message' => 'User not authenticated.']);
+    exit;
+}
+
+// Fetch userId using the email
+$stmtFetchUserId = $conn->prepare("SELECT userId FROM users WHERE email = ?");
+$stmtFetchUserId->bind_param("s", $email);
+$stmtFetchUserId->execute();
+$stmtFetchUserId->bind_result($userId);
+$stmtFetchUserId->fetch();
+$stmtFetchUserId->close();
+
+if (!$userId) {
+    echo json_encode(['success' => false, 'message' => 'Invalid email. User does not exist.']);
+    exit;
+}
+
 $conn->begin_transaction();
 
 try {
     // Insert into `order` table
-    $stmtOrder = $conn->prepare("INSERT INTO `order` (datetime) VALUES (?)");
-    $stmtOrder->bind_param("s", $orderDateTime);
+    $stmtOrder = $conn->prepare("INSERT INTO `order` (userId, datetime) VALUES (?, ?)");
+    $stmtOrder->bind_param("is", $userId, $orderDateTime);
     $stmtOrder->execute();
     $orderId = $conn->insert_id;
 
     // Insert into `track_order` table
     $stmtTrackOrder = $conn->prepare("INSERT INTO track_order (orderId, userId, status, orderDateTime, estimatedDelivery) VALUES (?, ?, 'ordered', ?, ?)");
-    $stmtTrackOrder->bind_param("iiss", $orderId, $userId, $orderDateTime, $estimatedDelivery); // Use the actual userId
+    $stmtTrackOrder->bind_param("iiss", $orderId, $userId, $orderDateTime, $estimatedDelivery);
     $stmtTrackOrder->execute();
     $trackId = $conn->insert_id;
 

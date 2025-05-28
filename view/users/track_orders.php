@@ -9,7 +9,7 @@ include("../../dB/config.php");
 ?>
 <?php
 
-$userId = 1; // Hardcoded for now. Change dynamically based on session/login.
+$userId = 13; // Hardcoded for now. Change dynamically based on session/login.
 
 // Fetch orders
 $ordersQuery = "
