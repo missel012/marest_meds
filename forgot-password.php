@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,9 +67,7 @@
         <form action="controller/forgot-password.php" method="POST">
             <label for="email">Email Address</label>
             <input type="email" name="email" id="email" required>
-            <label for="new_password">New Password</label>
-            <input type="password" name="new_password" id="new_password" required>
-            <button type="submit">Reset Password</button>
+            <button type="submit" name="send_reset">Send Reset Link</button>
         </form>
         <a href="login.php">Back to Login</a>
     </div>

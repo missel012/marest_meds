@@ -525,7 +525,7 @@ include("./includes/footer.php");
         }
     }
 
-    async function addToCart(genericName, brandName, itemPrice, group, inventoryId, imageBase64, milligram, dosageForm, quantity) {
+    async function addToCart(genericName, brandName, itemPrice, group, inventoryId, imageBase64) {
         await fetchLatestOrderId(); // Fetch updated Order ID before adding to cart
 
         console.log("Adding to cart:", {
@@ -533,10 +533,7 @@ include("./includes/footer.php");
             brandName,
             itemPrice,
             group,
-            inventoryId,
-            milligram,
-            dosageForm,
-            quantity
+            inventoryId
         });
 
         const itemName = `${genericName} ${brandName}`;
@@ -558,19 +555,24 @@ include("./includes/footer.php");
                 inventoryId: inventoryId,
                 medicineGroup: group,
                 originalQuantity: originalQuantity,
-                image: imageBase64, // Add the image to the cart object
-                milligram: milligram,
-                dosageForm: dosageForm,
-                stockQuantity: quantity,
-                genericName: genericName,
-                brandName: brandName,
-                group: group
+                image: imageBase64 // Add the image to the cart object
             };
         }
         if (cart[itemName].quantity < originalQuantity) {
             cart[itemName].quantity++;
             updateStock(inventoryId, -1);
             updateCart();
+
+            // Update the modal's stock display
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Item added to cart!',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
 
             // Update the modal's stock display
             const modalStockElement = document.getElementById('modalStock');
@@ -620,10 +622,10 @@ include("./includes/footer.php");
         // Add the "Print Receipt" button only if there are items in the cart
         if (Object.keys(cart).length > 0) {
             cartItems.innerHTML += `
-    <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-outline-primary" id="print-receipt-btn" data-bs-toggle="modal" data-bs-target="#checkoutModal" onclick="populateCheckoutModal()">Check Out</button>
-    </div>
-    `;
+        <div class="d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-primary" id="print-receipt-btn" onclick="showReceipt()">Print Receipt</button>
+        </div>
+        `;
         }
 
         totalAmount.innerText = `₱${total.toFixed(2)}`;
@@ -697,103 +699,10 @@ include("./includes/footer.php");
         // Dynamically set the onclick handler for the Add to Cart button
         const addToCartBtn = document.getElementById('modalAddToCartBtn');
         addToCartBtn.onclick = function() {
-            addToCart(genericName, brandName, price, group, inventoryId, imageBase64, milligram, dosageForm, quantity);
+            addToCart(genericName, brandName, price, group, inventoryId, imageBase64);
         };
 
         const modal = new bootstrap.Modal(document.getElementById('drugDetailModal'));
         modal.show();
-    }
-
-    function populateCheckoutModal() {
-        const orderSummary = document.getElementById('order-summary');
-        const orderDate = document.getElementById('orderDate');
-        const estimatedDelivery = document.getElementById('estimatedDelivery');
-        const checkoutTotal = document.getElementById('checkoutTotal');
-
-        orderSummary.innerHTML = '';
-        let total = 0;
-        const cartItems = Object.keys(cart);
-
-        cartItems.forEach((itemName, index) => {
-            const item = cart[itemName];
-            const itemTotal = item.quantity * item.price;
-            total += itemTotal;
-
-            const borderStyle = index < cartItems.length - 1 ? 'border-bottom: 1px solid #6CCF54;' : '';
-
-            orderSummary.innerHTML += `
-        <div class="d-flex align-items-center mb-3" style="${borderStyle} padding-bottom: 10px;">
-            <div style="flex: 1; text-align: center;">
-                <img src="data:image/jpeg;base64,${item.image}" alt="${itemName}" class="img-fluid" style="width: 100px; height: auto; object-fit: cover; border-radius: 0.5rem;" />
-            </div>
-            <div style="flex: 3; padding-left: 15px;">
-                <h5 style="margin: 0 0 10px;">${itemName}</h5>
-                <p class="mb-1">Quantity: ${item.quantity}</p>
-                <p class="mb-1">Price per Unit: ₱${item.price.toFixed(2)}</p>
-                <p class="mb-1 fw-bold">Total: ₱${itemTotal.toFixed(2)}</p>
-            </div>
-        </div>
-        `;
-        });
-
-        checkoutTotal.textContent = `₱${total.toFixed(2)}`;
-
-        // Order date & delivery
-        const now = new Date();
-        orderDate.textContent = now.toLocaleString();
-
-        const delivery = new Date(now);
-        delivery.setDate(now.getDate() + 3);
-        estimatedDelivery.textContent = delivery.toLocaleDateString();
-    }
-
-    async function confirmOrder() {
-        const address = document.getElementById('address').value;
-        const phoneNumber = document.getElementById('phoneNumber').value;
-
-        if (!address || !phoneNumber) {
-            alert("Please fill in all required fields.");
-            return;
-        }
-
-        const orderData = {
-            cart: cart,
-            address: address,
-            phoneNumber: phoneNumber,
-            orderDateTime: new Date().toISOString(),
-            estimatedDelivery: new Date(new Date().setDate(new Date().getDate() + 3)).toISOString()
-        };
-
-        try {
-            const response = await fetch('confirm_order.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(orderData)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert("Order confirmed successfully!");
-                cart = {}; // Clear the cart
-                updateCart(); // Update the cart UI
-
-                // Close the modal properly
-                const checkoutModal = bootstrap.Modal.getInstance(document.getElementById('checkoutModal'));
-                if (checkoutModal) {
-                    checkoutModal.hide();
-                }
-
-                // Remove the modal backdrop manually if it persists
-                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
-            } else {
-                alert("Failed to confirm order: " + result.message);
-            }
-        } catch (error) {
-            console.error("Error confirming order:", error);
-            alert("An error occurred while confirming the order.");
-        }
     }
 </script>
