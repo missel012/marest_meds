@@ -171,51 +171,5 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 <br><br>
 
-<section class="popular-products-section" style="text-align: left; padding: 30px 20px;">
-  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;margin-left: 40px; color:rgb(179, 2, 2);">
-    Popular Products
-  </h2>
-  <div style="text-align: right; margin-top: 10px;">
-    <button style="padding: 5px 10px; font-size: 14px; cursor: pointer; background-color: red; color: white; border: none; border-radius: 5px;">
-      View More Products
-    </button>
-  </div>
-</section>
-
-<div class="popular-products">
-  <div class="product-card">
-    <img src="../../assets/img/brufen.jpg" alt="Analgesic">
-    <span>Analgesic</span>
-  </div>
-  <div class="product-card">
-    <img src="../../assets/img/amoxil.jpg" alt="Antibiotic">
-    <span>Antibiotic</span>
-  </div>
-  <div class="product-card">
-    <img src="../../assets/img/cetzine.png" alt="Antidiabetic">
-    <span>Antidiabetic</span>
-  </div>
-  <div class="product-card">
-    <img src="../../assets/img/calpol.jpg" alt="Antihistamine">
-    <span>Antihistamine</span>
-  </div>
-  <div class="product-card">
-    <img src="../../assets/img/dolex.jpg" alt="NSAID">
-    <span>NSAID</span>
-  </div>
-</div>
-
-<!-- Hidden additional products -->
-<div class="more-products hidden">
-  <div class="product-card">
-    <img src="https://via.placeholder.com/150" alt="Antihypertensive">
-    <span>Antihypertensive</span>
-  </div>
-  <div class="product-card">
-    <img src="https://via.placeholder.com/150" alt="Extra Medicine">
-    <span>Extra Medicine</span>
-  </div>
-</div>
-
 </body>
 </html>

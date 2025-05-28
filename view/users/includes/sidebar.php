@@ -76,6 +76,13 @@ if (isset($_SESSION['email'])) {
     </li><!-- End Profile Page Nav -->
 
     <li class="nav-item">
+      <a class="nav-link <?php echo (basename($_SERVER['PHP_SELF']) == 'about-us.php') ? 'active' : 'collapsed'; ?>" href="about-us.php ">
+        <i class="bi bi-info-circle"></i> <!-- Updated icon -->
+        <span>About Us</span>
+      </a>
+</li><!-- End About Us Nav -->
+
+    <li class="nav-item">
       <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#logoutModal">
         <i class="bi bi-box-arrow-right logout-icon"></i>
         <span>Logout</span>
