@@ -4,66 +4,42 @@ requireRole('admin');
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
+include("../../db/config.php");
 
-// Placeholder orders array
-$orders = [
-    [
-        'orderId' => 1,
-        'datetime' => '2024-06-01 10:30:00',
-        'customer_email' => 'john@example.com',
-        'firstName' => 'John',
-        'lastName' => 'Doe',
-        'status' => 'Pending',
-        'items' => [
-            ['genericName' => 'Paracetamol', 'brandName' => 'Biogesic', 'quantity' => 2],
-            ['genericName' => 'Ibuprofen', 'brandName' => 'Advil', 'quantity' => 1],
-        ]
-    ],
-    [
-        'orderId' => 2,
-        'datetime' => '2024-06-02 14:15:00',
-        'customer_email' => 'jane@example.com',
-        'firstName' => 'Jane',
-        'lastName' => 'Smith',
-        'status' => 'In Transit',
-        'items' => [
-            ['genericName' => 'Cetirizine', 'brandName' => 'Allerta', 'quantity' => 3],
-        ]
-    ],
-    [
-        'orderId' => 3,
-        'datetime' => '2024-06-03 09:00:00',
-        'customer_email' => 'alice@example.com',
-        'firstName' => 'Alice',
-        'lastName' => 'Brown',
-        'status' => 'Delivered',
-        'items' => [
-            ['genericName' => 'Loperamide', 'brandName' => 'Imodium', 'quantity' => 1],
-            ['genericName' => 'Amoxicillin', 'brandName' => 'Amoxil', 'quantity' => 2],
-        ]
-    ],
-];
-
-// Handle status update (simulate in session for demo)
-// Only start session if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-if (!isset($_SESSION['online_orders'])) {
-    $_SESSION['online_orders'] = $orders;
-}
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'], $_POST['status'])) {
-    foreach ($_SESSION['online_orders'] as &$order) {
-        if ($order['orderId'] == $_POST['order_id']) {
-            $order['status'] = $_POST['status'];
-            break;
-        }
-    }
-    unset($order);
-    header("Location: online_orders.php");
+// Handle status update
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['track_id'], $_POST['status'])) {
+    $trackId = intval($_POST['track_id']);
+    $status = $_POST['status'];
+    $stmt = $conn->prepare("UPDATE track_order SET status = ? WHERE trackId = ?");
+    $stmt->bind_param("si", $status, $trackId);
+    $stmt->execute();
+    $stmt->close();
+    // Use JavaScript redirect to avoid header issues if output already started
+    echo "<script>window.location.href='online_orders.php';</script>";
     exit();
 }
-$orders = $_SESSION['online_orders'];
+
+// Fetch all online orders with user info
+$query = "
+    SELECT t.trackId, t.orderId, t.userId, t.status, t.orderDateTime, t.estimatedDelivery, t.cancelReason,
+           u.firstName, u.lastName, u.email
+    FROM track_order t
+    LEFT JOIN users u ON t.userId = u.userId
+    ORDER BY t.orderDateTime DESC
+";
+$result = $conn->query($query);
+
+// Fetch order details for all track orders
+$detailsQuery = "
+    SELECT d.trackId, d.quantity, d.price, i.genericName, i.brandName
+    FROM track_order_details d
+    LEFT JOIN inventory i ON d.inventoryId = i.inventoryId
+";
+$detailsResult = $conn->query($detailsQuery);
+$orderItems = [];
+while ($row = $detailsResult->fetch_assoc()) {
+    $orderItems[$row['trackId']][] = $row;
+}
 ?>
 
 <div class="pagetitle">
@@ -87,25 +63,33 @@ $orders = $_SESSION['online_orders'];
             <th>Customer</th>
             <th>Items</th>
             <th>Order Date</th>
+            <th>Est. Delivery</th>
             <th>Status</th>
             <th>Action</th>
+            <th>Cancel Reason</th>
           </tr>
         </thead>
         <tbody>
-        <?php foreach ($orders as $order): ?>
+        <?php while ($order = $result->fetch_assoc()): ?>
           <tr style="background: #fff;">
             <td style="color:#DB5C79; font-weight:bold;">ORDER-00<?= htmlspecialchars($order['orderId']) ?></td>
             <td>
-              <span style="color:#5AB94A; font-weight:bold;"><?= htmlspecialchars(($order['firstName'] ?? '') . ' ' . ($order['lastName'] ?? '')) ?></span><br>
-              <small style="color:#888;"><?= htmlspecialchars($order['customer_email']) ?></small>
+              <span style="color:#5AB94A; font-weight:bold;">
+                <?= htmlspecialchars(($order['firstName'] ?? '') . ' ' . ($order['lastName'] ?? '')) ?>
+              </span><br>
+              <small style="color:#888;"><?= htmlspecialchars($order['email']) ?></small>
             </td>
             <td>
-              <?php if (!empty($order['items'])): ?>
+              <?php if (!empty($orderItems[$order['trackId']])): ?>
                 <details>
-                  <summary style="color:#5AB94A; cursor:pointer;"><?= count($order['items']) ?> item(s)</summary>
+                  <summary style="color:#5AB94A; cursor:pointer;"><?= count($orderItems[$order['trackId']]) ?> item(s)</summary>
                   <ul style="padding-left: 1.2em;">
-                    <?php foreach ($order['items'] as $item): ?>
-                      <li><?= htmlspecialchars($item['genericName'] . ' ' . $item['brandName']) ?> <span style="color:#DB5C79;">(x<?= $item['quantity'] ?>)</span></li>
+                    <?php foreach ($orderItems[$order['trackId']] as $item): ?>
+                      <li>
+                        <?= htmlspecialchars($item['genericName'] . ' ' . $item['brandName']) ?>
+                        <span style="color:#DB5C79;">(x<?= $item['quantity'] ?>)</span>
+                        <span style="color:#5AB94A;">₱<?= number_format($item['price'], 2) ?></span>
+                      </li>
                     <?php endforeach; ?>
                   </ul>
                 </details>
@@ -113,17 +97,18 @@ $orders = $_SESSION['online_orders'];
                 <span style="color:#DB5C79;">No items</span>
               <?php endif; ?>
             </td>
-            <td><?= htmlspecialchars($order['datetime']) ?></td>
+            <td><?= htmlspecialchars($order['orderDateTime']) ?></td>
+            <td><?= htmlspecialchars($order['estimatedDelivery']) ?></td>
             <td>
               <form method="POST" style="display:inline;">
-                <input type="hidden" name="order_id" value="<?= $order['orderId'] ?>">
+                <input type="hidden" name="track_id" value="<?= $order['trackId'] ?>">
                 <select name="status" class="form-select form-select-sm" style="width:auto;display:inline-block; border:1.5px solid #DB5C79; color:#DB5C79; font-weight:bold;">
                   <?php
-                  $statuses = ['Pending', 'In Transit', 'On the Way', 'Delivered'];
+                  $statuses = ['ordered','processing','shipping','delivered','completed','cancelled','rejected'];
                   foreach ($statuses as $status) {
                     $selected = (strcasecmp($order['status'], $status) === 0) ? 'selected' : '';
-                    $color = $status === 'Delivered' ? '#5AB94A' : ($status === 'Pending' ? '#DB5C79' : '#DB5C79');
-                    echo "<option value=\"$status\" $selected style=\"color:$color;\">$status</option>";
+                    $color = $status === 'delivered' || $status === 'completed' ? '#5AB94A' : ($status === 'cancelled' || $status === 'rejected' ? '#DB5C79' : '#DB5C79');
+                    echo "<option value=\"$status\" $selected style=\"color:$color;\">".ucfirst($status)."</option>";
                   }
                   ?>
                 </select>
@@ -132,8 +117,13 @@ $orders = $_SESSION['online_orders'];
                 <button type="submit" class="btn btn-sm" style="background:#5AB94A; color:#fff; font-weight:bold; border:none;">Save</button>
               </form>
             </td>
+            <td>
+              <?php if ($order['cancelReason']) {
+                echo '<span style="color:#DB5C79;">' . htmlspecialchars($order['cancelReason']) . '</span>';
+              } ?>
+            </td>
           </tr>
-        <?php endforeach; ?>
+        <?php endwhile; ?>
         </tbody>
       </table>
     </div>
