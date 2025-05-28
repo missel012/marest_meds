@@ -22,15 +22,23 @@ if (isset($_SESSION['email'])) {
   $result = $stmt->get_result();
   $user = $result->fetch_assoc();
 
-  // Update session variables with user data
-  $_SESSION['firstName'] = $user['firstName'];
-  $_SESSION['lastName'] = $user['lastName'];
-  $_SESSION['email'] = $user['email'];
-  $_SESSION['profilePicture'] = $user['profilePicture'];
-  $_SESSION['birthday'] = $user['birthday'];
-  $_SESSION['gender'] = $user['gender'];
-  $_SESSION['phoneNumber'] = $user['phoneNumber'];
-  $_SESSION['role'] = $user['role'];
+  if ($user) {
+    // Update session variables with user data
+    $_SESSION['firstName'] = $user['firstName'];
+    $_SESSION['lastName'] = $user['lastName'];
+    $_SESSION['email'] = $user['email'];
+    $_SESSION['profilePicture'] = $user['profilePicture'];
+    $_SESSION['birthday'] = $user['birthday'];
+    $_SESSION['gender'] = $user['gender'];
+    $_SESSION['phoneNumber'] = $user['phoneNumber'];
+    $_SESSION['role'] = $user['role'];
+  } else {
+    // User not found, force logout
+    session_unset();
+    session_destroy();
+    header("Location: ../../login.php");
+    exit();
+  }
 } else {
   // Redirect to login if email is not set in the session
   header("Location: ../../login.php");
@@ -368,7 +376,7 @@ Swal.fire({
                 <div class="row mb-3">
                   <label for="email" class="col-md-4 col-lg-3 col-form-label" style="color: #000000;">Email</label>
                   <div class="col-md-8 col-lg-9">
-                    <input name="email" type="email" class="form-control" id="email" value="<?= htmlspecialchars($user['email']) ?>" required style="color: black;">
+                    <input name="email" type="email" class="form-control" id="email" value="<?= htmlspecialchars($user['email']) ?>" required style="color: black;" disabled>
                   </div>
                 </div>
                 <div class="text-center">

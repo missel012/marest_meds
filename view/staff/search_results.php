@@ -50,7 +50,6 @@ if ($query !== '') {
   <div class="mt-3 mb-4 d-flex flex-wrap gap-2">
     <button class="btn btn-outline-success active-tab" onclick="filterTab('all')">All</button>
     <button class="btn btn-outline-success" onclick="filterTab('inventory')">Inventory (<?= count($results['Inventory']) ?>)</button>
-    <button class="btn btn-outline-success" onclick="filterTab('staff')">Staff (<?= count($results['Staff']) ?>)</button>
     <button class="btn btn-outline-success" onclick="filterTab('prescriptions')">Prescriptions (<?= count($results['Prescriptions']) ?>)</button>
   </div>
 
