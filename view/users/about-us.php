@@ -25,13 +25,6 @@
   text-align: left;            /* Left-align text */
   margin: 0 auto;
 }
-    }
-    .about-rectangle h1 {
-  margin-top: 0;
-  color: #4154f1; /* New heading color */
-  font-size: 2.2rem;
-  letter-spacing: 1px;
-}
 
 .about-rectangle .tagline {
   font-size: 20px;
