@@ -46,34 +46,40 @@ if (isset($_SESSION['email'])) {
   <!-- End Profile Section -->
 
   <li class="nav-item">
-  <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : 'collapsed'; ?>" href="index.php">
+    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : 'collapsed'; ?>" href="index.php">
       <i class="bi bi-grid"></i>
       <span>Dashboard</span>
     </a>
   </li><!-- End Dashboard Nav -->
 
-    <li class="nav-item">
+  <li class="nav-item">
     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'inventory.php' ? 'active' : 'collapsed'; ?>" href="inventory.php">
-        <i class="bi bi-person"></i>
-        <span>Inventory</span>
-      </a>
-    </li><!-- End Inventory Page Nav -->
+      <i class="bi bi-person"></i>
+      <span>Inventory</span>
+    </a>
+  </li><!-- End Inventory Page Nav -->
 
-
-    <li class="nav-item">
+  <li class="nav-item">
     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'orders_prescription.php' ? 'active' : 'collapsed'; ?>" href="orders_prescription.php">
-        <i class="bi bi-person"></i>
-        <span>Prescription Orders</span>
-      </a>
-    </li><!-- End Prescription Orders Page Nav -->
+      <i class="bi bi-person"></i>
+      <span>Prescription Orders</span>
+    </a>
+  </li><!-- End Prescription Orders Page Nav -->
 
- 
-    <li class="nav-item">
+  <!-- NEW: Online Orders Tab -->
+  <li class="nav-item">
+    <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'online_orders.php' ? 'active' : 'collapsed'; ?>" href="online_orders.php">
+      <i class="bi bi-truck"></i>
+      <span>Online Order Tracking</span>
+    </a>
+  </li><!-- End Online Orders Nav -->
+
+  <li class="nav-item">
     <a class="nav-link <?= basename($_SERVER['PHP_SELF']) == 'staff.php' ? 'active' : 'collapsed'; ?>" href="staff.php">
-        <i class="bi bi-person"></i>
-        <span>Staff</span>
-      </a>
-    </li><!-- End Prescription Orders Page Nav -->
+      <i class="bi bi-person"></i>
+      <span>Staff</span>
+    </a>
+  </li><!-- End Staff Page Nav -->
 
   </li><!-- End Icons Nav -->
 
