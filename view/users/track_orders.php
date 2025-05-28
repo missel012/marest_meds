@@ -1,94 +1,241 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
 include("../../dB/config.php");
+include("../../auth/authentication.php"); // Include authentication file to access session data
+
+// Ensure the user is authenticated
+$email = isset($_SESSION['email']) ? $_SESSION['email'] : null;
+if (!$email) {
+    echo "<script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Unauthorized',
+            text: 'Please log in to view your orders.',
+            showConfirmButton: true
+        }).then(() => {
+            window.location.href = '/IT322/login.php';
+        });
+    </script>";
+    exit;
+}
+
+// Fetch userId using the email
+$stmtFetchUserId = $conn->prepare("SELECT userId FROM users WHERE email = ?");
+$stmtFetchUserId->bind_param("s", $email);
+$stmtFetchUserId->execute();
+$stmtFetchUserId->bind_result($userId);
+$stmtFetchUserId->fetch();
+$stmtFetchUserId->close();
+
+if (!$userId) {
+    echo "<script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'User not found.',
+            showConfirmButton: true
+        }).then(() => {
+            window.location.href = '/IT322/login.php';
+        });
+    </script>";
+    exit;
+}
+
+// Cancel logic – runs before HTML renders
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
+    $trackId = (int)$_POST['trackId'];
+    $reason = $conn->real_escape_string($_POST['reason']);
+
+    $updateQuery = "
+        UPDATE track_order
+        SET status = 'cancelled', cancelReason = '$reason'
+        WHERE trackId = $trackId AND userId = $userId AND status IN ('ordered', 'processing')
+    ";
+
+    if ($conn->query($updateQuery)) {
+        echo "<script>
+            window.onload = function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Order cancelled successfully!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => location.href = window.location.href);
+            };
+        </script>";
+    } else {
+        echo "<script>
+            window.onload = function() {
+                Swal.fire('Error', 'Cancellation failed.', 'error');
+            };
+        </script>";
+    }
+}
+
+// Load orders — exclude all canceled orders so none appear
+$ordersQuery = "
+    SELECT t.trackId, t.orderId, t.status, t.orderDateTime, t.estimatedDelivery, t.cancelReason
+    FROM track_order t
+    WHERE t.userId = $userId
+      AND t.status != 'cancelled'
+    ORDER BY t.orderDateTime DESC
+";
+$ordersResult = $conn->query($ordersQuery);
 ?>
 
-<div class="container mt-4">
-  <div class="card shadow">
-    <div class="card-header" style="background-color: #6ccf54; color: white;">
-      <h4 class="mb-0">➕ Add Order</h4>
-    </div>
-    <div class="card-body">
-      <form action="add_order_process.php" method="POST" id="orderForm">
-        <!-- Customer Name -->
-        <div class="mb-3">
-          <label class="form-label">Customer Name</label>
-          <input type="text" class="form-control" name="customer_name"
-            value="<?= htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']) ?>" readonly>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Track Orders</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+        .order-box { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: capitalize; }
+        .ordered { background: orange; color: white; }
+        .processing { background: gold; }
+        .shipping { background: blue; color: white; }
+        .delivered { background: green; color: white; }
+        .completed { background: darkgreen; color: white; }
+        .cancelled, .rejected { background: red; color: white; }
+        .cancel-btn {
+            background: #d9534f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .cancel-btn:hover {
+            background: #c9302c;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+<h2>🛒 Your Orders</h2>
+
+<?php if ($ordersResult->num_rows === 0): ?>
+    <p>You have no active orders.</p>
+<?php else: ?>
+    <?php while ($order = $ordersResult->fetch_assoc()): ?>
+        <div class="order-box">
+            <strong>Order #<?= htmlspecialchars($order['orderId']) ?></strong><br>
+            Date: <?= date("M d, Y h:i A", strtotime($order['orderDateTime'])) ?><br>
+            Estimated Delivery: <?= $order['estimatedDelivery'] ? htmlspecialchars($order['estimatedDelivery']) : "N/A" ?><br>
+            Status: <span class="status-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span><br>
+
+            <?php if ($order['cancelReason']): ?>
+                <strong>❌ Cancel Reason:</strong> <?= htmlspecialchars($order['cancelReason']) ?><br>
+            <?php endif; ?>
+
+            <?php if (in_array($order['status'], ['ordered', 'processing'])): ?>
+                <button class="cancel-btn" onclick="confirmCancel(<?= (int)$order['trackId'] ?>)">Cancel Order</button>
+            <?php endif; ?>
+
+            <table>
+                <thead>
+                    <tr><th>Generic</th><th>Brand</th><th>Dosage</th><th>Form</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                <?php
+                    $itemsQuery = "
+                        SELECT oi.genericName, oi.brandName, oi.milligram, oi.dosageForm, oi.quantity, oi.price, oi.total
+                        FROM order_items oi
+                        WHERE oi.orderId = {$order['orderId']}
+                    ";
+                    $itemsResult = $conn->query($itemsQuery);
+                    while ($item = $itemsResult->fetch_assoc()):
+                ?>
+                    <tr>
+                        <td><?= htmlspecialchars($item['genericName']) ?></td>
+                        <td><?= htmlspecialchars($item['brandName']) ?></td>
+                        <td><?= (int)$item['milligram'] ?> mg</td>
+                        <td><?= htmlspecialchars($item['dosageForm']) ?></td>
+                        <td><?= (int)$item['quantity'] ?></td>
+                        <td>₱<?= number_format($item['price'], 2) ?></td>
+                        <td>₱<?= number_format($item['total'], 2) ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
+    <?php endwhile; ?>
+<?php endif; ?>
 
-        <!-- Select Item -->
-        <div class="mb-3">
-          <label class="form-label">Select Item</label>
-          <select class="form-select" name="medicine_id" id="medicineSelect" required>
-            <option value="" disabled selected>-- Select Medicine --</option>
-            <?php
-            $query = "SELECT inventoryId, brandName, quantity FROM inventory";
-            $result = mysqli_query($conn, $query);
-            while ($row = mysqli_fetch_assoc($result)) {
-              $id = $row['inventoryId'];
-              $brand = htmlspecialchars($row['brandName']);
-              $stock = (int)$row['quantity'];
-              echo "<option value='$id' data-stock='$stock'>$brand (Stock: $stock)</option>";
-            }
-            ?>
-          </select>
-        </div>
+<!-- Hidden form for submitting cancellation -->
+<form id="cancelForm" method="POST" style="display: none;">
+    <input type="hidden" name="trackId" id="trackId">
+    <input type="hidden" name="reason" id="reason">
+    <input type="hidden" name="cancel_order" value="1">
+</form>
 
-        <!-- Quantity Input -->
-        <div class="mb-3">
-          <label class="form-label">Quantity</label>
-          <input type="number" class="form-control" name="quantity" id="quantityInput" min="1" required>
-          <div id="stockWarning" class="form-text text-danger d-none">⚠️ Over the limit</div>
-        </div>
-
-        <!-- Order Date -->
-        <div class="mb-3">
-          <label class="form-label">Order Date</label>
-          <input type="date" class="form-control" name="order_date" value="<?= date('Y-m-d') ?>" required>
-        </div>
-
-        <!-- Buttons -->
-        <button type="submit" class="btn btn-primary" id="submitBtn">Save Order</button>
-        <a href="orders_list.php" class="btn btn-secondary">Cancel</a>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- JavaScript for Stock Limit Validation -->
 <script>
-  const medicineSelect = document.getElementById('medicineSelect');
-  const quantityInput = document.getElementById('quantityInput');
-  const warning = document.getElementById('stockWarning');
-  const submitBtn = document.getElementById('submitBtn');
+function confirmCancel(trackId) {
+    Swal.fire({
+        title: 'Cancel Order',
+        html: `
+            <div style="text-align: left;">
+                <label for="reasonSelect">Reason for cancellation:</label><br>
+                <select id="reasonSelect" style="width: 100%; padding: 6px; font-size: 14px; margin-top: 4px;">
+                    <option value="" disabled selected>Select a reason</option>
+                    <option value="Wrong medicine">Wrong medicine</option>
+                    <option value="Changed my mind">Changed my mind</option>
+                    <option value="Ordered by mistake">Ordered by mistake</option>
+                    <option value="Found a better price">Found a better price</option>
+                    <option value="Delivery taking too long">Delivery taking too long</option>
+                    <option value="Other">Other (please specify)</option>
+                </select>
+                <input type="text" id="customReason" placeholder="Enter your reason" 
+                       style="display: none; width: 100%; padding: 6px; font-size: 14px; margin-top: 8px;" />
+            </div>
+        `,
+        width: 400,
+        confirmButtonText: 'Submit',
+        showCancelButton: true,
+        preConfirm: () => {
+            const select = document.getElementById('reasonSelect');
+            const input = document.getElementById('customReason');
+            const selected = select.value;
+            const finalReason = selected === 'Other' ? input.value.trim() : selected;
 
-  medicineSelect.addEventListener('change', () => {
-    quantityInput.value = '';
-    quantityInput.classList.remove('is-invalid');
-    warning.classList.add('d-none');
-    submitBtn.disabled = false;
-  });
+            if (!finalReason) {
+                Swal.showValidationMessage('Please provide a reason.');
+                return false;
+            }
 
-  quantityInput.addEventListener('input', () => {
-    const selected = medicineSelect.options[medicineSelect.selectedIndex];
-    const stock = parseInt(selected.getAttribute('data-stock'));
-    const quantity = parseInt(quantityInput.value);
+            return finalReason;
+        },
+        didOpen: () => {
+            const select = document.getElementById('reasonSelect');
+            const input = document.getElementById('customReason');
 
-    if (quantity > stock) {
-      quantityInput.classList.add('is-invalid');
-      warning.classList.remove('d-none');
-      submitBtn.disabled = true;
-    } else {
-      quantityInput.classList.remove('is-invalid');
-      warning.classList.add('d-none');
-      submitBtn.disabled = false;
-    }
-  });
+            select.addEventListener('change', () => {
+                input.style.display = select.value === 'Other' ? 'block' : 'none';
+            });
+        }
+    }).then(result => {
+        if (result.isConfirmed) {
+            document.getElementById('trackId').value = trackId;
+            document.getElementById('reason').value = result.value;
+            document.getElementById('cancelForm').submit();
+        }
+    });
+}
 </script>
 
-<?php
-include("./includes/footer.php");
-?>
+</body>
+</html>
+
+<?php include("./includes/footer.php"); ?>

@@ -71,7 +71,7 @@ if (isset($_SESSION['email'])) {
       <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
         <li class="dropdown-header">
           <h6><?= htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']) ?></h6>
-          <span><?= htmlspecialchars($_SESSION['role'] === 'user' ? 'Staff' : ucfirst($_SESSION['role'])) ?></span>
+          <span><?= htmlspecialchars($_SESSION['role'] === 'user' ? 'User' : ucfirst($_SESSION['role'])) ?></span>
         </li>
         <li>
           <hr class="dropdown-divider">

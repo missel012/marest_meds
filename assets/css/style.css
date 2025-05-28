@@ -777,16 +777,41 @@ body {
 }
 
 .home-banner-container {
-  width: 200%;
+  width: 100%;
   margin: 0;
   padding: 0;
 }
 
 .about-us {
   position: relative;
+   text-align: center; /* This will center the button */
   width: 100%;
 }
+.know-more-btn {
+  position: absolute;
+  left: 35%;
+  
+  bottom: 90px; /* adjust this value to move the button up/down over the image */
+  transform: translateX(-50%);
+  padding: 8px 38px;
+  background-color: rgb(79, 248, 76);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s;
+  display: inline-block;
 
+  box-shadow: 0 2px 8px rgba(65, 84, 241, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.know-more-btn:hover {
+  background: #63ff37;
+  color: #fff;
+}
 .about-us img {
   width: 300vw; /* full screen width */
   height: 200px; /* adjust height as needed */
@@ -968,9 +993,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 180px;
-  width: 150px;
-  padding: 10px 10px;
+  height: 220px;
+  width: 170px;
+  left:10px
+  padding: 1px 8px;
   background-color: #f2f2f2;
   border-radius: 12px;
   text-decoration: none;
@@ -996,19 +1022,24 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 5px;
 }
 
 .product-card {
-  width: 150px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  width: 180px;              /* Set a fixed width */
+  height: 240px;             /* Set a fixed height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px;
+  border: 1px solid #a4fffd;
+  border-radius: 10px;
   background-color: #f9f9f9;
+  box-shadow: 2px 2px 2px rgb(250, 250, 251);
   text-align: center;
   transition: transform 0.2s;
 }
-
 .product-card:hover {
   transform: scale(1.05);
 }
@@ -1123,7 +1154,7 @@ body {
 /* Icon image inside each box */
 .category-box img {
   width: 80%;       /* Fill the box width */
-  height: 100px;     /* Fixed height for consistency */
+  height: 150px;     /* Fixed height for consistency */
   object-fit: cover; /* Crop and cover the box without stretching */
   border-radius: 10px;
 }
