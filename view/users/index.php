@@ -12,180 +12,246 @@ if (session_status() == PHP_SESSION_NONE) {
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
-include("../../dB/config.php");
+include("../../db/config.php"); // Include database configuration
 
-$firstName = 'Guest'; // default fallback name
+// Fetch total number of medicines
+$medicine_query = "SELECT COUNT(*) AS total_medicines FROM inventory";
+$medicine_result = mysqli_query($conn, $medicine_query);
+$medicine_data = mysqli_fetch_assoc($medicine_result);
+$total_medicines = $medicine_data['total_medicines'];
 
-if (isset($_SESSION['user_id'])) {
-    $userId = intval($_SESSION['user_id']);
-    $stmt = $conn->prepare("SELECT firstName, lastName FROM users WHERE userId = ?");
-    $stmt->bind_param("i", $userId);
-    $stmt->execute();
-    $stmt->bind_result($dbFirstName, $dbLastName);
-    if ($stmt->fetch()) {
-        $_SESSION['firstName'] = $dbFirstName;
-        $_SESSION['lastName'] = $dbLastName;
-    }
-    $stmt->close();
+// Fetch number of medicines with quantity less than 30
+$low_stock_query = "SELECT inventoryId, genericName, brandName, milligram, dosageForm, quantity, price FROM inventory WHERE quantity < 30";
+$low_stock_result = mysqli_query($conn, $low_stock_query);
+$low_stock_medicines = [];
+while ($row = mysqli_fetch_assoc($low_stock_result)) {
+    $low_stock_medicines[] = $row;
 }
 
+// Fetch orders for the current day
+$current_date = date('Y-m-d');
+$orders_query = "SELECT COUNT(*) AS orders_today FROM `order` WHERE DATE(datetime) = '$current_date'";
+$orders_result = mysqli_query($conn, $orders_query);
+$orders_data = mysqli_fetch_assoc($orders_result);
+$orders_today = $orders_data['orders_today'];
 
+// Fetch orders and calculate total revenue for each order
+$query = "
+    SELECT 
+        DATE(o.datetime) AS order_date, 
+        SUM(oi.total) AS total_revenue
+    FROM 
+        `order` o
+    INNER JOIN 
+        order_items oi 
+    ON 
+        o.orderId = oi.orderId
+    GROUP BY 
+        DATE(o.datetime)
+    ORDER BY 
+        DATE(o.datetime) ASC
+";
+$result = mysqli_query($conn, $query);
+
+if (!$result) {
+    die("Query failed: " . mysqli_error($conn));
+}
+
+$graphData = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $graphData[] = [
+        'order_date' => $row['order_date'],
+        'total_revenue' => $row['total_revenue']
+    ];
+}
+
+// Pass graph data to JavaScript
 ?>
-<div class="welcome-banner position-relative text-white mb-4" style="background: url('assets/img/pharmacy-bg.jpg') center center / cover no-repeat; height: 250px; border-radius: 15px;">
-  <div class="overlay position-absolute top-0 start-0 w-100 h-100" style="background-color: rgba(0,0,0,0.5); border-radius: 15px;"></div>
-  <div class="container h-100 d-flex flex-column justify-content-center align-items-start position-relative p-4">
-    <h2 class="fw-light mb-2">Hi, <?= htmlspecialchars($_SESSION['firstName']) ?>!</h2>
-    <h1 class="display-5 fw-bold">
-      Welcome to <span style="color: #db5c79;">Marest</span> <span style="color: #6ccf54;">Meds</span>
-    </h1>
-  </div>
-</div>
+<script>
+    const graphData = <?php echo json_encode($graphData); ?>;
+</script>
+
+<div class="pagetitle">
+  <h1>Dashboard</h1>
+  <nav>
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="index.php">Home</a></li>
+      <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+  </nav>
+</div><!-- End Page Title -->
+
+<div class="row">
 
 
-<!-- Dashboard Buttons as Cards -->
-<div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
-    <!-- What's New Button -->
-    <div class="card card-button shadow-sm text-center" data-bs-toggle="modal" data-bs-target="#whatsNewModal">
-        <div class="card-body">
-            <i class="bi bi-stars display-4 text-primary mb-2"></i>
-            <h5 class="card-title">What's New</h5>
-        </div>
-    </div>
+<!-- Home Page Content -->
+<!-- Home Banners Section -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About Us Banner Only</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
 
-    <!-- Prescription Required Button -->
-    <div class="card card-button shadow-sm text-center" data-bs-toggle="modal" data-bs-target="#prescriptionModal">
-        <div class="card-body">
-            <i class="bi bi-prescription display-4 text-danger mb-2"></i>
-            <h5 class="card-title">Prescription</h5>
-        </div>
-    </div>
+    .home-banner-container {
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+      border-radius: 0;
+    }
 
-    <!-- Stocks Button -->
-    <a href="inventory.php" class="text-decoration-none">
-        <div class="card card-button shadow-sm text-center">
-            <div class="card-body">
-                <i class="bi bi-box-seam display-4 text-success mb-2"></i>
-                <h5 class="card-title">Stocks</h5>
-            </div>
-        </div>
-    </a>
+    .about-us {
+      position: relative;
+    }
 
-    <!-- Place Order Button -->
-    <a href="orders_prescription.php" class="text-decoration-none">
-        <div class="card card-button shadow-sm text-center">
-            <div class="card-body">
-                <i class="bi bi-cart-plus display-4 text-warning mb-2"></i>
-                <h5 class="card-title">Order</h5>
-            </div>
-        </div>
-    </a>
-</div>
+    .about-us img {
+      width: 620%;
+      height: 490px;
+      object-fit: cover;
+      display: block;
+    }
 
+    .about-us button {
+      position: absolute;
+      bottom: 120px;
+      left: 330px;
+      padding: 10px 45px;
+      border: none;
+      background-color: rgba(49, 247, 0, 0.69);
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
 
-<!-- MODALS -->
-<!-- What's New Modal -->
-<div class="modal fade" id="whatsNewModal" tabindex="-1" aria-labelledby="whatsNewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-md modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">🆕 What's New</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body px-4">
-        <ul class="list-group list-group-flush">
-          <?php
-          $newMedsQuery = "SELECT brandName FROM inventory ORDER BY inventoryId DESC LIMIT 5";
-          $newMeds = mysqli_query($conn, $newMedsQuery);
-          while ($med = mysqli_fetch_assoc($newMeds)) :
-          ?>
-            <li class="list-group-item d-flex align-items-center">
-              <i class="bi bi-capsule-pill me-2 text-primary fs-5"></i>
-              <span class="fw-semibold"><?= htmlspecialchars($med['brandName']) ?></span>
-            </li>
-          <?php endwhile; ?>
-        </ul>
-      </div>
+  <!-- About Us Banner -->
+  <div class="home-banner-container">
+    <div class="about-us">
+      <img src="../../assets/img/huhu.jpg" alt="About Us" />
+      <button onclick="location.href='about-us.php'">Learn More About Us</button>
     </div>
   </div>
-</div>
 
-
-<!-- Prescription Modal -->
-<div class="modal fade" id="prescriptionModal" tabindex="-1" aria-labelledby="prescriptionModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">🩺 Prescription Required</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body row">
-        <?php
-        $prescriptionQuery = "SELECT brandName AS name, image AS image_path FROM inventory WHERE `group` = 'prescription' LIMIT 4";
-        $prescriptionMeds = mysqli_query($conn, $prescriptionQuery);
-        while ($med = mysqli_fetch_assoc($prescriptionMeds)) :
-        ?>
-        <div class="col-md-3 mb-3">
-            <div class="card border-danger">
-                <img src="<?= htmlspecialchars($med['image_path']) ?>" class="card-img-top" alt="<?= htmlspecialchars($med['name']) ?>" style="height: 150px; object-fit: cover;">
-                <div class="card-body">
-                    <h6 class="card-title text-center text-danger"><?= htmlspecialchars($med['name']) ?></h6>
-                </div>
-            </div>
-        </div>
-        <?php endwhile; ?>
-      </div>
-    </div>
-  </div>
-</div>
-
-<?php include("./includes/footer.php"); ?>
-
-<!-- Bootstrap Icons (add this if not already included) -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+</body>
+</html>
 
 <style>
-    .pagetitle h1 {
-        font-weight: 700;
-        color: #2a8c7c;
-    }
-    .card-button {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    }
-
-    .card-button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.15);
-    }
-
-    .card-button .card-body {
-        margin-top: 2rem;
-        padding: 0;
-    }
-
-    .card-button .card-title {
-        font-size: 0.8rem;
-        font-weight: 600;
-        margin-top: 0.2rem;
-    }
-
-    .card-button .card-text {
-        display: none; /* Optional: hide for cleaner circular UI */
-    }
-
-
-    .list-group-item {
-    border: none;
-    padding: 0.75rem 0;
-    font-size: 1rem;
+  .featured-categories-section {
+    margin-top: 50px;
+    margin-bottom: 20px;
+    margin-left: 50px;
   }
 
-</style>
+  
+</style> 
+<!-- Featured Categories Section -->
+<!-- Featured Categories Section -->
+<div class="featured-categories-section">
+ <h2>Featured Categories</h2></h2>
+
+  </div>
+</div>
+
+  <div class="categories-container">
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol.jpg" alt="Analgesic" />
+      <span>Analgesic</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/ant.jpg" alt="Antibiotic" />
+      <span>Antibiotic</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol3.jpg" alt="Antidiabetic" />
+      <span>Antidiabetic</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol.7.jpg" alt="Antihistamine" />
+      <span>Antihistamine</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol2.jpg" alt="Antihypertensive" />
+  
+      <span>Antihypertensive</span>
+    </a>
+    <a href="#" class="category-box">
+      <img src="../../assets/img/lol5.jpg" alt="NSAID" />
+      <span>NSAID</span>
+      
+    </a>
+  </div>
+</div>
+</div> <!-- end of featured-categories-section -->
+
+<br><br> <!-- space before Popular Products -->
+
+
+  <section class="popular-products-section" style="text-align: left; padding: 30px 20px;">
+  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 20px;margin-left: 40px; color:rgb(179, 2, 2);">
+    Popular Products
+  </h2>
+
+  <!-- View More Button -->
+  <div style="text-align: right; margin-top: 10px;">
+    <button style="padding: 5px 10px; font-size: 14px; cursor: pointer; background-color: red; color: white; border: none; border-radius: 5px;">
+      View More Products
+    </button>
+  </div>
+</section>
+
+
+</div>
+</div>
+  <div class="popular-products">
+    <!-- First 5 popular products -->
+    <div class="product-card">
+      <img src="../../assets/img/brufen.jpg" alt="Analgesic">
+      <span>Analgesic</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/amoxil.jpg" alt="Antibiotic">
+      <span>Antibiotic</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/cetzine.png" alt="Antidiabetic">
+      <span>Antidiabetic</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/calpol.jpg" alt="Antihistamine">
+      <span>Antihistamine</span>
+    </div>
+    <div class="product-card">
+      <img src="../../assets/img/dolex.jpg" alt="NSAID">
+      <span>NSAID</span>
+    </div>
+  </div>
+
+
+
+  <!-- Hidden additional products -->
+  <div class="more-products hidden">
+    <div class="product-card">
+      <img src="https://via.placeholder.com/150" alt="Antihypertensive">
+      <span>Antihypertensive</span>
+    </div>
+    <div class="product-card">
+      <img src="https://via.placeholder.com/150" alt="Extra Medicine">
+      <span>Extra Medicine</span>
+    </div>
+  </div>
+</section>
+
+  
+</body>
+</html>
+
