@@ -39,7 +39,7 @@ if (isset($_SESSION['email'])) {
            alt="Profile Image" class="profile-img-sidebar">
       <div class="profile-info-sidebar">
         <h4><?= htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']) ?></h4>
-        <span><?= htmlspecialchars($_SESSION['role'] === 'user' ? 'Staff' : ucfirst($_SESSION['role'])) ?></span>
+        <span><?= htmlspecialchars($_SESSION['role'] === 'user' ? 'User' : ucfirst($_SESSION['role'])) ?></span>
       </div>
     </div>
     <!-- End Profile Section -->
