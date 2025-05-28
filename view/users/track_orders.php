@@ -16,18 +16,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     ";
 
     if ($conn->query($updateQuery)) {
-        echo "<script>
-            window.onload = function() {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: 'Order cancelled successfully!',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => location.href = window.location.href);
-            };
-        </script>";
+    echo "<script>
+        window.onload = function() {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Order cancelled successfully!',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => location.href = window.location.href);
+        };
+    </script>";
     } else {
         echo "<script>
             window.onload = function() {
@@ -37,12 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     }
 }
 
-// Load orders
-$userId = 1; // Replace with session value
+// Load orders — exclude all canceled orders so none appear
+$userId = 1; // Replace with your session user ID
 $ordersQuery = "
     SELECT t.trackId, t.orderId, t.status, t.orderDateTime, t.estimatedDelivery, t.cancelReason
     FROM track_order t
     WHERE t.userId = $userId
+      AND t.status != 'cancelled'
     ORDER BY t.orderDateTime DESC
 ";
 $ordersResult = $conn->query($ordersQuery);
@@ -84,45 +85,53 @@ $ordersResult = $conn->query($ordersQuery);
 
 <h2>🛒 Your Orders</h2>
 
-<?php while ($order = $ordersResult->fetch_assoc()): ?>
-    <div class="order-box">
-        <strong>Order #<?= $order['orderId'] ?></strong><br>
-        Date: <?= date("M d, Y h:i A", strtotime($order['orderDateTime'])) ?><br>
-        Estimated Delivery: <?= $order['estimatedDelivery'] ?: "N/A" ?><br>
-        Status: <span class="status-badge <?= $order['status'] ?>"><?= $order['status'] ?></span><br>
+<?php if ($ordersResult->num_rows === 0): ?>
+    <p>You have no active orders.</p>
+<?php else: ?>
+    <?php while ($order = $ordersResult->fetch_assoc()): ?>
+        <div class="order-box">
+            <strong>Order #<?= htmlspecialchars($order['orderId']) ?></strong><br>
+            Date: <?= date("M d, Y h:i A", strtotime($order['orderDateTime'])) ?><br>
+            Estimated Delivery: <?= $order['estimatedDelivery'] ? htmlspecialchars($order['estimatedDelivery']) : "N/A" ?><br>
+            Status: <span class="status-badge <?= htmlspecialchars($order['status']) ?>"><?= htmlspecialchars($order['status']) ?></span><br>
 
-        <?php if ($order['cancelReason']): ?>
-            <strong>❌ Cancel Reason:</strong> <?= htmlspecialchars($order['cancelReason']) ?><br>
-        <?php endif; ?>
+            <?php if ($order['cancelReason']): ?>
+                <strong>❌ Cancel Reason:</strong> <?= htmlspecialchars($order['cancelReason']) ?><br>
+            <?php endif; ?>
 
-        <?php if (in_array($order['status'], ['ordered', 'processing'])): ?>
-            <button class="cancel-btn" onclick="confirmCancel(<?= $order['trackId'] ?>)">Cancel Order</button>
-        <?php endif; ?>
+            <?php if (in_array($order['status'], ['ordered', 'processing'])): ?>
+                <button class="cancel-btn" onclick="confirmCancel(<?= (int)$order['trackId'] ?>)">Cancel Order</button>
+            <?php endif; ?>
 
-        <table>
-            <tr><th>Generic</th><th>Brand</th><th>Dosage</th><th>Form</th><th>Qty</th><th>Price</th><th>Total</th></tr>
-            <?php
-                $itemsQuery = "
-                    SELECT oi.genericName, oi.brandName, oi.milligram, oi.dosageForm, oi.quantity, oi.price, oi.total
-                    FROM order_items oi
-                    WHERE oi.orderId = {$order['orderId']}
-                ";
-                $itemsResult = $conn->query($itemsQuery);
-                while ($item = $itemsResult->fetch_assoc()):
-            ?>
-                <tr>
-                    <td><?= $item['genericName'] ?></td>
-                    <td><?= $item['brandName'] ?></td>
-                    <td><?= $item['milligram'] ?> mg</td>
-                    <td><?= $item['dosageForm'] ?></td>
-                    <td><?= $item['quantity'] ?></td>
-                    <td>₱<?= number_format($item['price'], 2) ?></td>
-                    <td>₱<?= number_format($item['total'], 2) ?></td>
-                </tr>
-            <?php endwhile; ?>
-        </table>
-    </div>
-<?php endwhile; ?>
+            <table>
+                <thead>
+                    <tr><th>Generic</th><th>Brand</th><th>Dosage</th><th>Form</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                <?php
+                    $itemsQuery = "
+                        SELECT oi.genericName, oi.brandName, oi.milligram, oi.dosageForm, oi.quantity, oi.price, oi.total
+                        FROM order_items oi
+                        WHERE oi.orderId = {$order['orderId']}
+                    ";
+                    $itemsResult = $conn->query($itemsQuery);
+                    while ($item = $itemsResult->fetch_assoc()):
+                ?>
+                    <tr>
+                        <td><?= htmlspecialchars($item['genericName']) ?></td>
+                        <td><?= htmlspecialchars($item['brandName']) ?></td>
+                        <td><?= (int)$item['milligram'] ?> mg</td>
+                        <td><?= htmlspecialchars($item['dosageForm']) ?></td>
+                        <td><?= (int)$item['quantity'] ?></td>
+                        <td>₱<?= number_format($item['price'], 2) ?></td>
+                        <td>₱<?= number_format($item['total'], 2) ?></td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php endwhile; ?>
+<?php endif; ?>
 
 <!-- Hidden form for submitting cancellation -->
 <form id="cancelForm" method="POST" style="display: none;">
@@ -130,6 +139,7 @@ $ordersResult = $conn->query($ordersQuery);
     <input type="hidden" name="reason" id="reason">
     <input type="hidden" name="cancel_order" value="1">
 </form>
+
 <script>
 function confirmCancel(trackId) {
     Swal.fire({
@@ -150,7 +160,7 @@ function confirmCancel(trackId) {
                        style="display: none; width: 100%; padding: 6px; font-size: 14px; margin-top: 8px;" />
             </div>
         `,
-        width: 400, // makes modal smaller
+        width: 400,
         confirmButtonText: 'Submit',
         showCancelButton: true,
         preConfirm: () => {
@@ -183,7 +193,6 @@ function confirmCancel(trackId) {
     });
 }
 </script>
-
 
 </body>
 </html>
