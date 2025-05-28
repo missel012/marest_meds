@@ -1,6 +1,10 @@
 <?php
-session_start();
+// Only start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include("../db/config.php"); // Include database configuration
+require_once __DIR__ . '/../auth/authentication.php'; // Use login() helper
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = mysqli_real_escape_string($conn, $_POST['email']);
@@ -16,19 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (mysqli_num_rows($result) > 0) {
         $user = mysqli_fetch_assoc($result);
 
-        // Check if the role is null or empty
-        if (empty($user['role'])) {
-            $_SESSION['message'] = "Please wait for your admin to add your account.";
-            $_SESSION['code'] = "info";
-            header("Location: ../login.php");
-            exit();
-        }
 
         // Verify the password (hashed or plain-text)
         if (password_verify($password, $user['password']) || $password === $user['password']) {
-            // Set session variables
-            $_SESSION['email'] = $user['email'];
-            $_SESSION['role'] = $user['role'];
+            // Use login() helper to set session variables
+            login($user['email'], $user['role']);
 
             // Clear the stored email after successful login
             unset($_SESSION['login_email']);
@@ -38,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: ../view/admin/index.php");
             } elseif ($user['role'] === 'user') {
                 header("Location: ../view/users/index.php");
+            } elseif ($user['role'] === 'staff') {
+                header("Location: ../view/staff/index.php");
             } elseif ($user['role'] === 'customer') {
                 header("Location: ../view/customer/index.php");
             } else {

@@ -5,76 +5,93 @@ ini_set('display_errors', 1);
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
+include("../../dB/config.php");
 ?>
 
-<div class="pagetitle">
-    <div class="d-flex justify-content-between align-items-center">
-        <h1>Track Orders</h1>
+<div class="container mt-4">
+  <div class="card shadow">
+    <div class="card-header" style="background-color: #6ccf54; color: white;">
+      <h4 class="mb-0">➕ Add Order</h4>
     </div>
-    <nav>
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="index.php">Home</a></li>
-            <li class="breadcrumb-item active">Track Orders</li>
-        </ol>
-    </nav>
-</div><!-- End Page Title -->
-
-<section class="section">
-    <div class="container mt-4">
-        <div class="card shadow">
-            <div class="card-header bg-success text-white">
-                <h4 class="mb-0">Order Tracking</h4>
-            </div>
-            <div class="card-body">
-                <!-- Search Form -->
-                <form method="GET" class="mb-4">
-                    <div class="input-group">
-                        <input type="text" name="order_id" class="form-control" placeholder="Enter Order ID to track..." required>
-                        <button class="btn btn-primary" type="submit">Track</button>
-                    </div>
-                </form>
-
-                <!-- Tracking Info (Mock Data) -->
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <h5>Tracking Information for Order #1234</h5>
-                        <p><strong>Status:</strong> Shipping</p>
-                        <p><strong>Address:</strong> 123 Sample Street, City</p>
-                        <p><strong>Phone:</strong> 0912-345-6789</p>
-                        <p><strong>Estimated Delivery:</strong> 2025-06-03</p>
-
-                        <!-- Status Progress Bar -->
-                        <div class="progress mt-4">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: 25%">Ordered</div>
-                            <div class="progress-bar bg-info" role="progressbar" style="width: 25%">Processing</div>
-                            <div class="progress-bar bg-warning text-dark" role="progressbar" style="width: 25%">Shipping</div>
-                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 25%">Delivered</div>
-                        </div>
-
-                        <!-- Visual Status Tracker -->
-                        <div class="d-flex justify-content-between mt-3">
-                            <small>Ordered</small>
-                            <small>Processing</small>
-                            <small><strong>Shipping</strong></small>
-                            <small>Delivered</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Optionally: More history or notes here -->
-            </div>
+    <div class="card-body">
+      <form action="add_order_process.php" method="POST" id="orderForm">
+        <!-- Customer Name -->
+        <div class="mb-3">
+          <label class="form-label">Customer Name</label>
+          <input type="text" class="form-control" name="customer_name"
+            value="<?= htmlspecialchars($_SESSION['firstName'] . ' ' . $_SESSION['lastName']) ?>" readonly>
         </div>
+
+        <!-- Select Item -->
+        <div class="mb-3">
+          <label class="form-label">Select Item</label>
+          <select class="form-select" name="medicine_id" id="medicineSelect" required>
+            <option value="" disabled selected>-- Select Medicine --</option>
+            <?php
+            $query = "SELECT inventoryId, brandName, quantity FROM inventory";
+            $result = mysqli_query($conn, $query);
+            while ($row = mysqli_fetch_assoc($result)) {
+              $id = $row['inventoryId'];
+              $brand = htmlspecialchars($row['brandName']);
+              $stock = (int)$row['quantity'];
+              echo "<option value='$id' data-stock='$stock'>$brand (Stock: $stock)</option>";
+            }
+            ?>
+          </select>
+        </div>
+
+        <!-- Quantity Input -->
+        <div class="mb-3">
+          <label class="form-label">Quantity</label>
+          <input type="number" class="form-control" name="quantity" id="quantityInput" min="1" required>
+          <div id="stockWarning" class="form-text text-danger d-none">⚠️ Over the limit</div>
+        </div>
+
+        <!-- Order Date -->
+        <div class="mb-3">
+          <label class="form-label">Order Date</label>
+          <input type="date" class="form-control" name="order_date" value="<?= date('Y-m-d') ?>" required>
+        </div>
+
+        <!-- Buttons -->
+        <button type="submit" class="btn btn-primary" id="submitBtn">Save Order</button>
+        <a href="orders_list.php" class="btn btn-secondary">Cancel</a>
+      </form>
     </div>
-</section>
+  </div>
+</div>
 
-<?php include("./includes/footer.php"); ?>
+<!-- JavaScript for Stock Limit Validation -->
+<script>
+  const medicineSelect = document.getElementById('medicineSelect');
+  const quantityInput = document.getElementById('quantityInput');
+  const warning = document.getElementById('stockWarning');
+  const submitBtn = document.getElementById('submitBtn');
 
-<style>
-.progress {
-    height: 30px;
-}
-.progress-bar {
-    line-height: 30px;
-    font-weight: bold;
-}
-</style>
+  medicineSelect.addEventListener('change', () => {
+    quantityInput.value = '';
+    quantityInput.classList.remove('is-invalid');
+    warning.classList.add('d-none');
+    submitBtn.disabled = false;
+  });
+
+  quantityInput.addEventListener('input', () => {
+    const selected = medicineSelect.options[medicineSelect.selectedIndex];
+    const stock = parseInt(selected.getAttribute('data-stock'));
+    const quantity = parseInt(quantityInput.value);
+
+    if (quantity > stock) {
+      quantityInput.classList.add('is-invalid');
+      warning.classList.remove('d-none');
+      submitBtn.disabled = true;
+    } else {
+      quantityInput.classList.remove('is-invalid');
+      warning.classList.add('d-none');
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+<?php
+include("./includes/footer.php");
+?>

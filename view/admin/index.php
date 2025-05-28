@@ -1,8 +1,13 @@
 <?php
+
+require_once __DIR__ . '/../../auth/authentication.php';
+requireRole('admin');
+
 include("./includes/header.php");
 include("./includes/topbar.php"); // Remove messages icon in topbar
 include("./includes/sidebar.php");
 include("../../db/config.php"); // Include database configuration
+
 
 // Fetch total number of medicines
 $medicine_query = "SELECT COUNT(*) AS total_medicines FROM inventory";
@@ -221,6 +226,7 @@ while ($row = mysqli_fetch_assoc($result)) {
     <div class="card" style="border: 3px solid #DB5C79; border-radius: 15px;">
       <div class="card-body">
         <h5 class="card-title">Calendar</h5>
+        <div id="calendar-month-year" style="font-weight:bold; font-size:18px; margin-bottom:10px;"></div>
         <div id="calendar"></div>
       </div>
     </div>
@@ -230,10 +236,20 @@ while ($row = mysqli_fetch_assoc($result)) {
 <script>
   document.addEventListener("DOMContentLoaded", function() {
     const calendarElement = document.getElementById('calendar');
+    const monthYearElement = document.getElementById('calendar-month-year');
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
+
+    // Display month and year
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    if (monthYearElement) {
+      monthYearElement.textContent = monthNames[currentMonth] + " " + currentYear;
+    }
 
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let calendarHTML = '<table class="table table-bordered"><thead><tr>';

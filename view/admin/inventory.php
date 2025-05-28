@@ -5,16 +5,29 @@ ini_set('display_errors', 1);
 include("./includes/header.php");
 include("./includes/topbar.php");
 include("./includes/sidebar.php");
-include("../../dB/config.php"); // Ensure this file contains your database connection
+include("../../dB/config.php");
 
-// Fetch inventory items grouped by category
-$query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
-$result = mysqli_query($conn, $query);
-
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $inventory = [];
-while ($row = mysqli_fetch_assoc($result)) {
-    $group = ucfirst($row['group']);
-    $inventory[$group][] = $row;
+
+if ($search != '') {
+    $searchSafe = mysqli_real_escape_string($conn, $search);
+    $query = "SELECT * FROM inventory WHERE genericName LIKE '%$searchSafe%' OR brandName LIKE '%$searchSafe%'";
+    $result = mysqli_query($conn, $query);
+
+    // Flatten all results into one group (e.g., "Search Result")
+    $inventory['Search Result'] = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $inventory['Search Result'][] = $row;
+    }
+} else {
+    $query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
+    $result = mysqli_query($conn, $query);
+
+    while ($row = mysqli_fetch_assoc($result)) {
+        $group = ucfirst($row['group']);
+        $inventory[$group][] = $row;
+    }
 }
 ?>
 
@@ -48,6 +61,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                                 <th scope="col">Dosage Form</th>
                                 <th scope="col">Quantity</th>
                                 <th scope="col">Price</th>
+                                <th scope="col">Image</th>
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
@@ -60,6 +74,16 @@ while ($row = mysqli_fetch_assoc($result)) {
                                     <td><?= htmlspecialchars($item['dosageForm']) ?></td>
                                     <td><?= $item['quantity'] ?></td>
                                     <td>₱<?= number_format($item['price'], 2) ?></td>
+                                    <td>
+                                        <?php if (!empty($item['image'])): ?>
+                                            <img src="data:image/jpeg;base64,<?php echo base64_encode($item['image']); ?>"
+                                                 alt="Product Image"
+                                                 class="img-fluid mb-2"
+                                                 style="width: 50px; height: 50px; object-fit: cover;" />
+                                        <?php else: ?>
+                                            <span class="text-muted">No Image</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <a href="#" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editInventoryModal" data-id="<?= $item['inventoryId'] ?>" style="background-color: #6CCF54; border: none;"><i class="bi bi-pencil-square"></i></a>
                                         <a href="#" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteInventoryModal" data-id="<?= $item['inventoryId'] ?>"><i class="bi bi-trash"></i></a>
@@ -83,7 +107,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addInventoryForm">
+                <form id="addInventoryForm" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="genericName" class="form-label">Generic Name</label>
                         <input type="text" class="form-control" id="genericName" name="genericName" required>
@@ -97,7 +121,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                         <input type="number" class="form-control" id="milligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
-                        <label for="dosageForm" class="form-label">Dosage</label>
+                        <label for="dosageForm" class="form-label">Dosage Form</label>
                         <input type="text" class="form-control" id="dosageForm" name="dosageForm" required>
                     </div>
                     <div class="mb-3">
@@ -119,7 +143,12 @@ while ($row = mysqli_fetch_assoc($result)) {
                             <option value="NSAID">NSAID</option>
                             <option value="other">Other</option>
                         </select>
-                        <input type="text" class="form-control mt-2 d-none" id="otherGroup" name="otherGroup" placeholder="Please specify">
+                        <input type="text" class="form-control mt-2 d-none" id="otherGroup" placeholder="Please specify">
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" onchange="previewAddImage(event)">
+                        <div id="addImagePreview" class="mt-2"></div>
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -130,6 +159,19 @@ while ($row = mysqli_fetch_assoc($result)) {
         </div>
     </div>
 </div>
+<script>
+function previewAddImage(event) {
+    const preview = document.getElementById('addImagePreview');
+    preview.innerHTML = '';
+    if (event.target.files && event.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:50px;height:50px;object-fit:cover;">`;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+}
+</script>
 
 <!-- Edit Inventory Modal -->
 <div class="modal fade" id="editInventoryModal" tabindex="-1" aria-labelledby="editInventoryModalLabel" aria-hidden="true">
@@ -140,7 +182,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="editInventoryForm">
+                <form id="editInventoryForm" enctype="multipart/form-data">
                     <input type="hidden" id="editInventoryId" name="inventoryId">
                     <div class="mb-3">
                         <label for="editGenericName" class="form-label">Generic Name</label>
@@ -155,7 +197,7 @@ while ($row = mysqli_fetch_assoc($result)) {
                         <input type="number" class="form-control" id="editMilligram" name="milligram" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editDosageForm" class="form-label">Dosage</label>
+                        <label for="editDosageForm" class="form-label">Dosage Form</label>
                         <input type="text" class="form-control" id="editDosageForm" name="dosageForm" required>
                     </div>
                     <div class="mb-3">
@@ -168,7 +210,21 @@ while ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="mb-3">
                         <label for="editGroup" class="form-label">Group</label>
-                        <input type="text" class="form-control" id="editGroup" name="group" required>
+                        <select class="form-select" id="editGroup" name="group" required>
+                            <option value="analgesic">Analgesic</option>
+                            <option value="antibiotic">Antibiotic</option>
+                            <option value="antidiabetic">Antidiabetic</option>
+                            <option value="antihistamine">Antihistamine</option>
+                            <option value="antihypertensive">Antihypertensive</option>
+                            <option value="NSAID">NSAID</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <input type="text" class="form-control mt-2 d-none" id="editOtherGroup" placeholder="Please specify">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editImage" class="form-label">Image</label>
+                        <input type="file" class="form-control" id="editImage" name="image" accept="image/*">
+                        <div id="currentImagePreview" class="mt-2"></div>
                     </div>
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -204,7 +260,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    document.getElementById('group').addEventListener('change', function () {
+    document.getElementById('group').addEventListener('change', function() {
         const otherGroupInput = document.getElementById('otherGroup');
         if (this.value === 'other') {
             otherGroupInput.classList.remove('d-none');
@@ -215,128 +271,220 @@ while ($row = mysqli_fetch_assoc($result)) {
         }
     });
 
-    document.getElementById('addInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('addInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
-        if (document.getElementById('group').value === 'other') {
-            formData.set('group', document.getElementById('otherGroup').value);
+        const groupSelect = document.getElementById('group');
+        let groupValue = groupSelect.value;
+        if (groupValue === 'other') {
+            groupValue = document.getElementById('otherGroup').value.trim();
         }
-
-        fetch('inventory_add.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Add Successful',
-                    text: 'The inventory item has been added successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Add Unsuccessful',
-                    text: 'There was an error adding the inventory item. Please try again.',
-                });
-            }
-        })
-        .catch(error => {
+        // Prevent empty group value
+        if (!groupValue) {
             Swal.fire({
+                toast: true,
+                position: 'top-end',
                 icon: 'error',
-                title: 'Add Unsuccessful',
-                text: 'There was an error adding the inventory item. Please try again.',
+                title: 'Group is required!',
+                showConfirmButton: true,
+                timer: 5000,
+                timerProgressBar: true
             });
-            console.error('Error:', error);
-        });
+            return;
+        }
+        formData.set('group', groupValue);
+
+        fetch('add_inventory.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.clone().json().catch(() => response.text()))
+            .then(data => {
+                if (typeof data === 'string') {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error adding item!',
+                        text: 'Server returned invalid JSON:\n' + data,
+                        showConfirmButton: true,
+                        timer: 10000,
+                        timerProgressBar: true
+                    });
+                    return;
+                }
+                if (data.success) {
+                    // Close the modal after successful add
+                    const addModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('addInventoryModal'));
+                    addModal.hide();
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Inventory item added!',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error adding item!',
+                        text: (data.error ? data.error : '') + (data.log ? "\n" + data.log : ''),
+                        showConfirmButton: true,
+                        timer: 10000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Error adding item!',
+                    text: error,
+                    showConfirmButton: true,
+                    timer: 10000,
+                    timerProgressBar: true
+                });
+                console.error('Error:', error);
+            });
     });
 
-    document.getElementById('editInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('editInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
 
-        fetch('inventory_edit.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+        fetch('edit_inventory.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close the modal after successful update
+                    const editModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('editInventoryModal'));
+                    editModal.hide();
+
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Inventory item updated!',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error updating item!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Edit Successful',
-                    text: 'The inventory item has been updated successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Edit Unsuccessful',
-                    text: 'There was an error updating the inventory item. Please try again.',
+                    title: 'Error updating item!',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Edit Unsuccessful',
-                text: 'There was an error updating the inventory item. Please try again.',
+                console.error('Error:', error);
             });
-            console.error('Error:', error);
-        });
     });
 
-    document.getElementById('deleteInventoryForm').addEventListener('submit', function (event) {
+    document.getElementById('deleteInventoryForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
 
-        fetch('inventory_delete.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
+        fetch('delete_inventory.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Inventory item deleted!',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        timerProgressBar: true
+                    }).then(() => {
+                        // Close the modal after success
+                        const deleteModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('deleteInventoryModal'));
+                        deleteModal.hide();
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: 'Error deleting item!',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }
+            })
+            .catch(error => {
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Delete Successful',
-                    text: 'The inventory item has been deleted successfully!',
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
                     icon: 'error',
-                    title: 'Delete Unsuccessful',
-                    text: 'There was an error deleting the inventory item. Please try again.',
+                    title: 'Error deleting item!',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
                 });
-            }
-        })
-        .catch(error => {
-            Swal.fire({
-                icon: 'error',
-                title: 'Delete Unsuccessful',
-                text: 'There was an error deleting the inventory item. Please try again.',
+                console.error('Error:', error);
             });
-            console.error('Error:', error);
-        });
     });
 
-    document.addEventListener('DOMContentLoaded', function () {
+    // Edit group select: show/hide other input
+    document.getElementById('editGroup').addEventListener('change', function() {
+        const otherGroupInput = document.getElementById('editOtherGroup');
+        if (this.value === 'other') {
+            otherGroupInput.classList.remove('d-none');
+            otherGroupInput.setAttribute('required', 'required');
+        } else {
+            otherGroupInput.classList.add('d-none');
+            otherGroupInput.removeAttribute('required');
+        }
+    });
+
+    // On show edit modal, fetch and populate fields
+    document.addEventListener('DOMContentLoaded', function() {
         const editInventoryModal = document.getElementById('editInventoryModal');
         const deleteInventoryModal = document.getElementById('deleteInventoryModal');
 
-        editInventoryModal.addEventListener('show.bs.modal', function (event) {
+        editInventoryModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
 
-            fetch('inventory_get.php?id=' + inventoryId)
+            fetch('get_inventory.php?id=' + inventoryId)
                 .then(response => response.json())
                 .then(data => {
+                    // Populate all input fields with values from database
                     document.getElementById('editInventoryId').value = data.inventoryId;
                     document.getElementById('editGenericName').value = data.genericName;
                     document.getElementById('editBrandName').value = data.brandName;
@@ -344,12 +492,41 @@ while ($row = mysqli_fetch_assoc($result)) {
                     document.getElementById('editDosageForm').value = data.dosageForm;
                     document.getElementById('editQuantity').value = data.quantity;
                     document.getElementById('editPrice').value = data.price;
-                    document.getElementById('editGroup').value = data.group;
+
+                    // Set group select and handle "other"
+                    const editGroupSelect = document.getElementById('editGroup');
+                    const editOtherGroupInput = document.getElementById('editOtherGroup');
+                    let found = false;
+                    for (let i = 0; i < editGroupSelect.options.length; i++) {
+                        if (editGroupSelect.options[i].value.toLowerCase() === data.group.toLowerCase()) {
+                            editGroupSelect.value = data.group;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        editGroupSelect.value = 'other';
+                        editOtherGroupInput.classList.remove('d-none');
+                        editOtherGroupInput.value = data.group;
+                        editOtherGroupInput.setAttribute('required', 'required');
+                    } else {
+                        editOtherGroupInput.classList.add('d-none');
+                        editOtherGroupInput.value = '';
+                        editOtherGroupInput.removeAttribute('required');
+                    }
+
+                    // Show current image preview if available (image is BLOB base64)
+                    if (data.image) {
+                        document.getElementById('currentImagePreview').innerHTML =
+                            `<img src="data:image/jpeg;base64,${data.image}" alt="Current Image" style="width:50px;height:50px;object-fit:cover;">`;
+                    } else {
+                        document.getElementById('currentImagePreview').innerHTML = `<span class="text-muted">No Image</span>`;
+                    }
                 })
                 .catch(error => console.error('Error:', error));
         });
 
-        deleteInventoryModal.addEventListener('show.bs.modal', function (event) {
+        deleteInventoryModal.addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
             const inventoryId = button.getAttribute('data-id');
             document.getElementById('deleteInventoryId').value = inventoryId;
@@ -397,7 +574,8 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     .btn-primary {
-        background-color: #6ccf54 !important; /* Save button color */
+        background-color: #6ccf54 !important;
+        /* Save button color */
         border-color: #6ccf54 !important;
     }
 
@@ -407,7 +585,8 @@ while ($row = mysqli_fetch_assoc($result)) {
     }
 
     .btn-secondary {
-        background-color: #db5c79 !important; /* Close button color */
+        background-color: #db5c79 !important;
+        /* Close button color */
         border-color: #db5c79 !important;
     }
 
@@ -418,6 +597,7 @@ while ($row = mysqli_fetch_assoc($result)) {
 
     /* Make modal wider */
     .modal-dialog {
-        max-width: 800px !important; /* Adjust width as needed */
+        max-width: 800px !important;
+        /* Adjust width as needed */
     }
 </style>
