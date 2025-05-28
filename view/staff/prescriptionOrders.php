@@ -9,6 +9,7 @@ $query = "SELECT * FROM inventory ORDER BY `group` ASC, inventoryId ASC";
 $result = mysqli_query($conn, $query);
 
 $inventory = [];
+$categoryNames = []; // Store display names for each normalized group
 while ($row = mysqli_fetch_assoc($result)) {
     // Convert image blob to base64 if present
     if (!empty($row['image'])) {
@@ -16,7 +17,11 @@ while ($row = mysqli_fetch_assoc($result)) {
     } else {
         $row['image_base64'] = '';
     }
-    $inventory[$row['group']][] = $row;
+    $normalized_group = strtolower(trim($row['group']));
+    if (!isset($categoryNames[$normalized_group])) {
+        $categoryNames[$normalized_group] = $row['group'];
+    }
+    $inventory[$normalized_group][] = $row;
 }
 
 // Fetch the last order ID from the database
@@ -43,17 +48,19 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
             <div class="card" style="flex: 3; margin-right: 10px;">
                 <div class="card-body" style="padding: 1rem;">
                     <!-- Pills Tabs -->
-                    <div class="nav nav-pills mb-3" id="pills-tab" role="tablist" style="overflow-x: auto; white-space: nowrap;">
-                        <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">All Items</button>
-                        <?php foreach ($inventory as $category => $items) : ?>
-                            <button class="nav-link" id="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>-tab" data-bs-toggle="pill" data-bs-target="#pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" type="button" role="tab" aria-controls="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" aria-selected="false"><?php echo htmlspecialchars($category); ?></button>
-                        <?php endforeach; ?>
+                    <div class="scrollable-tabs-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap;">
+                        <div class="nav nav-pills mb-3" id="pills-tab" role="tablist" style="display: inline-flex; min-width: 100%;">
+                            <button class="nav-link active" id="pills-home-tab" data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-controls="pills-home" aria-selected="true">All Items</button>
+                            <?php foreach ($inventory as $normalized_group => $items) : ?>
+                                <button class="nav-link" id="pills-<?php echo strtolower(str_replace(' ', '-', $normalized_group)); ?>-tab" data-bs-toggle="pill" data-bs-target="#pills-<?php echo strtolower(str_replace(' ', '-', $normalized_group)); ?>" type="button" role="tab" aria-controls="pills-<?php echo strtolower(str_replace(' ', '-', $normalized_group)); ?>" aria-selected="false"><?php echo ucwords(strtolower(htmlspecialchars($categoryNames[$normalized_group]))); ?></button>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     <div class="tab-content pt-2" id="myTabContent">
                         <div class="tab-pane fade show active" id="pills-home" role="tabpanel" aria-labelledby="pills-home-tab">
                             <div class="row">
                                 <!-- All Items Tab -->
-                                <?php foreach ($inventory as $category => $items) : ?>
+                                <?php foreach ($inventory as $normalized_group => $items) : ?>
                                     <?php foreach ($items as $item) : ?>
                                         <div class="col-lg-3">
                                             <button type="button" class="btn custom-card mt-2 mb-2"
@@ -72,8 +79,8 @@ $nextOrderId = $orderRow['lastOrderId'] + 1;
                                 <?php endforeach; ?>
                             </div>
                         </div>
-                        <?php foreach ($inventory as $category => $items) : ?>
-                            <div class="tab-pane fade" id="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>" role="tabpanel" aria-labelledby="pills-<?php echo strtolower(str_replace(' ', '-', $category)); ?>-tab">
+                        <?php foreach ($inventory as $normalized_group => $items) : ?>
+                            <div class="tab-pane fade" id="pills-<?php echo strtolower(str_replace(' ', '-', $normalized_group)); ?>" role="tabpanel" aria-labelledby="pills-<?php echo strtolower(str_replace(' ', '-', $normalized_group)); ?>-tab">
                                 <div class="row">
                                     <!-- Category Tab -->
                                     <?php foreach ($items as $item) : ?>
@@ -132,14 +139,13 @@ include("./includes/footer.php");
 <style>
     /* Custom card styles */
     .custom-card {
-        border: 1px solid #DB5C79;
+        border: 2.5px solid #DB5C79; /* Increased border thickness */
         background-color: white;
         transition: all 0.3s ease;
         text-align: left;
         padding: 0;
         width: 100%;
-        height: 130px;
-        /* Set a fixed height */
+        height: 180px; /* Increased height */
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -148,6 +154,54 @@ include("./includes/footer.php");
     .custom-card:hover {
         border-color: #FFDEE6;
         background-color: #FFDEE6;
+    }
+
+    /* Custom image styles */
+    .custom-card-img {
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .custom-card:hover .custom-card-img {
+        opacity: 0.5;
+    }
+
+    .custom-card .card-body {
+        padding: 0.5rem 0.5rem 0.25rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        justify-content: flex-start;
+    }
+
+    .custom-card .card-body img {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+        margin-bottom: 6px;
+        margin-top: 6px;
+        display: block;
+    }
+
+    .custom-card .card-title {
+        font-size: 0.85rem !important;
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.2rem !important;
+        text-align: center;
+        min-height: 2.2em;
+        line-height: 1.1em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .custom-card .card-subtitle,
+    .custom-card .card-text {
+        font-size: 0.8rem !important;
+        text-align: center;
+        margin-bottom: 0.1rem;
     }
 
     /* Custom button styles */
@@ -162,20 +216,6 @@ include("./includes/footer.php");
         border-color: #FFDEE6;
         background-color: #FFDEE6;
         color: #C53D3D;
-    }
-
-    /* Custom image styles */
-    .custom-card-img {
-        transition: all 0.3s ease;
-        width: 100%;
-    }
-
-    .custom-card:hover .custom-card-img {
-        opacity: 0.5;
-    }
-
-    .custom-card .card-body {
-        padding: 1rem;
     }
 
     /* Custom active tab styles */
@@ -276,26 +316,35 @@ include("./includes/footer.php");
     }
 
     /* Scrollable tabs */
-    #pills-tab {
+    .scrollable-tabs-wrapper {
         overflow-x: auto;
-        white-space: nowrap;
         -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        scrollbar-width: thin;
+        scrollbar-color: #ccc #fff;
+        margin-bottom: 8px;
     }
-
-    #pills-tab::-webkit-scrollbar {
-        display: none;
-        /* Hide scrollbar */
+    .scrollable-tabs-wrapper::-webkit-scrollbar {
+        height: 6px;
+        background: #fff;
     }
-
+    .scrollable-tabs-wrapper::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 3px;
+    }
+    #pills-tab {
+        flex-wrap: nowrap !important;
+        min-width: 100%;
+    }
     .nav-pills .nav-link {
         display: inline-block;
         white-space: nowrap;
         /* Ensure tabs are in one row */
+        margin-right: 4px;
     }
-
-    .nav-pills {
-        flex-wrap: nowrap;
-        /* Prevent tabs from wrapping to the next line */
+    /* Optional: cursor for drag */
+    .scrollable-tabs-wrapper {
+        cursor: grab;
     }
 
     #delete-btn {
@@ -628,4 +677,50 @@ include("./includes/footer.php");
         cart = {};
         updateCart();
     });
+
+    // Optional: Enable drag-to-scroll for tab bar (desktop and touch)
+    (function() {
+        const el = document.querySelector('.scrollable-tabs-wrapper');
+        let isDown = false;
+        let startX, scrollLeft;
+
+        if (el) {
+            el.addEventListener('mousedown', (e) => {
+                isDown = true;
+                el.classList.add('active');
+                startX = e.pageX - el.offsetLeft;
+                scrollLeft = el.scrollLeft;
+            });
+            el.addEventListener('mouseleave', () => {
+                isDown = false;
+                el.classList.remove('active');
+            });
+            el.addEventListener('mouseup', () => {
+                isDown = false;
+                el.classList.remove('active');
+            });
+            el.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - startX) * 1.5; //scroll-fast
+                el.scrollLeft = scrollLeft - walk;
+            });
+            // Touch events for mobile
+            el.addEventListener('touchstart', (e) => {
+                isDown = true;
+                startX = e.touches[0].pageX - el.offsetLeft;
+                scrollLeft = el.scrollLeft;
+            });
+            el.addEventListener('touchend', () => {
+                isDown = false;
+            });
+            el.addEventListener('touchmove', (e) => {
+                if (!isDown) return;
+                const x = e.touches[0].pageX - el.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                el.scrollLeft = scrollLeft - walk;
+            });
+        }
+    })();
 </script>
