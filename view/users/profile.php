@@ -190,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['changePassword'])) {
                  style="width: 150px; height: 150px; object-fit: cover; border: 5px solid #ffffff;">
           </div>
           <h2 class="card-title mb-1" style="margin-top: 40px; font-size: 1.5rem; color: #ffffff;"><?= htmlspecialchars($user['firstName'] . ' ' . $user['lastName']) ?></h2>
-          <p class="text-light" style="font-size: 1rem;"><?= $user['role'] === 'admin' ? 'Admin' : 'Staff' ?></p>
+          <p class="text-light" style="font-size: 1rem;"><?= $user['role'] === 'admin' ? 'Admin' : 'User' ?></p>
           <div class="contact-info mt-3">
             <p><i class="bi bi-telephone-fill me-2"></i><?= htmlspecialchars($user['phoneNumber']) ?></p>
             <p><i class="bi bi-envelope-fill me-2"></i><?= htmlspecialchars($user['email']) ?></p>
