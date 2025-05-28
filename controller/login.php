@@ -1,6 +1,10 @@
 <?php
-session_start();
+// Only start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 include("../db/config.php"); // Include database configuration
+require_once __DIR__ . '/../auth/authentication.php'; // Use login() helper
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = mysqli_real_escape_string($conn, $_POST['email']);
@@ -19,9 +23,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Verify the password (hashed or plain-text)
         if (password_verify($password, $user['password']) || $password === $user['password']) {
-            // Set session variables
-            $_SESSION['email'] = $user['email'];
-            $_SESSION['role'] = $user['role'];
+            // Use login() helper to set session variables
+            login($user['email'], $user['role']);
 
             // Clear the stored email after successful login
             unset($_SESSION['login_email']);

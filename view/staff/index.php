@@ -1,8 +1,12 @@
 <?php
+require_once __DIR__ . '/../../auth/authentication.php';
+requireRole('staff');
+
 include("./includes/header.php");
 include("./includes/topbar.php"); // Remove messages icon in topbar
 include("./includes/sidebar.php");
 include("../../db/config.php"); // Include database configuration
+
 
 // Fetch total number of medicines
 $medicine_query = "SELECT COUNT(*) AS total_medicines FROM inventory";
@@ -223,18 +227,8 @@ while ($row = mysqli_fetch_assoc($result)) {
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
 
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    // Add month and year display above the calendar
-    let calendarHTML = `<div style="text-align:center; font-weight:bold; font-size:18px; margin-bottom:10px;">
-      ${monthNames[currentMonth]} ${currentYear}
-    </div>`;
-
-    calendarHTML += '<table class="table table-bordered"><thead><tr>';
+    let calendarHTML = '<table class="table table-bordered"><thead><tr>';
 
     const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     daysOfWeek.forEach(day => {
